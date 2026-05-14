@@ -5,8 +5,11 @@ import {
   getVehicleTypes,
   getParkingRates,
   getBusinessConfig,
+  getEmployees,
 } from "@/lib/services/config";
 import { ConfigTabs } from "@/components/config/ConfigTabs";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Settings2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -29,30 +32,35 @@ export default async function ConfiguracionPage() {
     );
   }
 
-  const [slots, services, vehicleTypes, parkingRates, businessConfig] =
+  const [slots, services, vehicleTypes, parkingRates, businessConfig, employees] =
     await Promise.all([
       getAllSlots(),
       getAllServices(),
       getVehicleTypes(),
       getParkingRates(),
       getBusinessConfig(),
+      getEmployees(),
     ]);
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Configuración</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Gestiona las plazas, tarifas, servicios y datos del negocio.
-        </p>
-      </div>
-      <ConfigTabs
-        slots={slots}
-        services={services}
-        vehicleTypes={vehicleTypes}
-        parkingRates={parkingRates}
-        businessConfig={businessConfig}
+    <div className="flex flex-col min-h-full">
+      <PageHeader
+        title="Configuración"
+        subtitle="Plazas, tarifas, servicios y datos del negocio"
+        icon={Settings2}
+        iconColor="#6b7280"
+        iconBg="#f9fafb"
       />
+      <div className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
+        <ConfigTabs
+          slots={slots}
+          services={services}
+          vehicleTypes={vehicleTypes}
+          parkingRates={parkingRates}
+          businessConfig={businessConfig}
+          employees={employees}
+        />
+      </div>
     </div>
   );
 }

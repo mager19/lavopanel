@@ -19,6 +19,9 @@ import {
   createServiceAction,
   toggleServiceAction,
   saveBusinessConfigAction,
+  createEmployeeAction,
+  toggleEmployeeAction,
+  updateEmployeeRoleAction,
 } from "@/app/actions/config";
 import type { Slot, VehicleType } from "@/lib/db/schema";
 
@@ -45,12 +48,22 @@ type ServiceRow = {
   vehicleTypeIcon: string | null;
 };
 
+type EmployeeRow = {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "owner" | "worker";
+  active: boolean | null;
+  createdAt: Date | null;
+};
+
 interface ConfigTabsProps {
   slots: Slot[];
   services: ServiceRow[];
   vehicleTypes: VehicleType[];
   parkingRates: ParkingRateRow[];
   businessConfig: Record<string, string>;
+  employees: EmployeeRow[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -557,6 +570,133 @@ function NegocioTab({
   );
 }
 
+// ─── EmpleadosTab ────────────────────────────────────────────
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Admin",
+  owner: "Dueño",
+  worker: "Trabajador",
+};
+
+const ROLE_COLOR: Record<string, string> = {
+  admin: "bg-red-100 text-red-700",
+  owner: "bg-purple-100 text-purple-700",
+  worker: "bg-blue-100 text-blue-700",
+};
+
+function EmpleadosTab({ employees }: { employees: EmployeeRow[] }) {
+  const [isPending, startTransition] = useTransition();
+  const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    const formData = new FormData(e.currentTarget);
+    startTransition(async () => {
+      try {
+        await createEmployeeAction(formData);
+        setShowForm(false);
+        (e.target as HTMLFormElement).reset();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error al crear empleado");
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{employees.length} usuario{employees.length !== 1 ? "s" : ""}</p>
+        <Button size="sm" onClick={() => setShowForm(!showForm)} className="rounded-xl">
+          {showForm ? "Cancelar" : "+ Nuevo usuario"}
+        </Button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleCreate} className="bg-muted/40 border border-border rounded-2xl p-4 space-y-3">
+          <p className="text-sm font-semibold">Nuevo usuario</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Nombre</label>
+              <Input name="name" placeholder="Juan García" required className="h-10 rounded-xl" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Email</label>
+              <Input name="email" type="email" placeholder="juan@lavadero.com" required className="h-10 rounded-xl" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Contraseña temporal</label>
+              <Input name="password" type="password" placeholder="••••••••" required minLength={6} className="h-10 rounded-xl" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Rol</label>
+              <Select name="role" defaultValue="worker">
+                <SelectTrigger className="h-10 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="worker">Trabajador</SelectItem>
+                  <SelectItem value="owner">Dueño</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+          <Button type="submit" disabled={isPending} className="w-full h-10 rounded-xl">
+            {isPending ? "Creando..." : "Crear usuario"}
+          </Button>
+        </form>
+      )}
+
+      <div className="space-y-2">
+        {employees.map((emp) => (
+          <div
+            key={emp.id}
+            className="flex items-center justify-between gap-3 bg-card border border-border/50 rounded-2xl px-4 py-3"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-semibold text-foreground truncate">{emp.name}</p>
+                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${ROLE_COLOR[emp.role]}`}>
+                  {ROLE_LABEL[emp.role]}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground truncate">{emp.email}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Select
+                defaultValue={emp.role}
+                onValueChange={(val) =>
+                  startTransition(() =>
+                    updateEmployeeRoleAction(emp.id, val as "admin" | "owner" | "worker")
+                  )
+                }
+              >
+                <SelectTrigger className="h-8 w-28 rounded-lg text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="worker">Trabajador</SelectItem>
+                  <SelectItem value="owner">Dueño</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <Switch
+                checked={emp.active ?? true}
+                onCheckedChange={(val) =>
+                  startTransition(() => toggleEmployeeAction(emp.id, val))
+                }
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ConfigTabs ──────────────────────────────────────────
 
 export function ConfigTabs({
@@ -565,6 +705,7 @@ export function ConfigTabs({
   vehicleTypes,
   parkingRates,
   businessConfig,
+  employees,
 }: ConfigTabsProps) {
   return (
     <Tabs defaultValue="plazas">
@@ -577,10 +718,7 @@ export function ConfigTabs({
           Vehículos
           <span className="ml-1 text-[10px] text-muted-foreground">soon</span>
         </TabsTrigger>
-        <TabsTrigger value="empleados" disabled>
-          Empleados
-          <span className="ml-1 text-[10px] text-muted-foreground">soon</span>
-        </TabsTrigger>
+        <TabsTrigger value="empleados">Empleados</TabsTrigger>
       </TabsList>
 
       <TabsContent value="plazas">
@@ -597,6 +735,10 @@ export function ConfigTabs({
 
       <TabsContent value="negocio">
         <NegocioTab businessConfig={businessConfig} />
+      </TabsContent>
+
+      <TabsContent value="empleados">
+        <EmpleadosTab employees={employees} />
       </TabsContent>
     </Tabs>
   );

@@ -1,8 +1,10 @@
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import { FloorPlan } from "@/components/slots/FloorPlan";
+import { FloorPlan3DLoader } from "@/components/slots/FloorPlan3DLoader";
 import { getTodayKPIs } from "@/lib/services/orders";
 import { getSlots } from "@/lib/services/slots";
+import { getOpenShift } from "@/lib/services/shifts";
+import { Car, CheckCheck, Banknote, Clock, ChevronRight, Zap } from "lucide-react";
 
 function formatRevenue(amount: number): string {
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
@@ -14,7 +16,7 @@ function getDateLabel(): string {
   const d = new Date();
   const week  = ["dom","lun","mar","mié","jue","vie","sáb"];
   const month = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-  return `${week[d.getDay()]} ${d.getDate()} · ${month[d.getMonth()]}`;
+  return `${week[d.getDay()]} ${d.getDate()} ${month[d.getMonth()]}`;
 }
 
 async function getInitialSlots() {
@@ -41,131 +43,156 @@ export default async function DashboardPage() {
     getInitialSlots(),
   ]);
 
+  const userId = Number((session?.user as { id?: string | number })?.id ?? 0);
+  const openShift = userId ? await getOpenShift(userId) : null;
   const firstName = session?.user?.name?.split(" ")[0];
 
+  const kpiCards = [
+    {
+      icon: Car,
+      iconBg: "#fff7ed",
+      iconColor: "#F97316",
+      value: kpis.todayCount.toString(),
+      valueColor: "#111827",
+      label: "Autos hoy",
+    },
+    {
+      icon: CheckCheck,
+      iconBg: "#f0fdf4",
+      iconColor: "#16a34a",
+      value: kpis.readyCount.toString(),
+      valueColor: "#16a34a",
+      label: "Listos",
+    },
+    {
+      icon: Banknote,
+      iconBg: "#fff7ed",
+      iconColor: "#F97316",
+      value: formatRevenue(kpis.todayRevenue),
+      valueColor: "#F97316",
+      label: "Ingresos",
+    },
+  ];
+
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full bg-background">
 
-      {/* ── DARK CONTROL BAND ──────────────────────────────────────── */}
-      <div
-        className="relative overflow-hidden"
-        style={{ background: "#100E0C" }}
-      >
-        {/* Ambient orange glow — top right */}
-        <div
-          className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-20"
-          style={{ background: "radial-gradient(circle, #F97316 0%, transparent 70%)" }}
-        />
-        {/* Subtle dot grid texture */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-          }}
-        />
+      {/* ── HEADER ──────────────────────────────────────────────────── */}
+      <div className="bg-card border-b border-border/40 px-4 pt-5 pb-4 md:px-6">
 
-        <div className="relative px-4 pt-6 pb-5 md:px-6">
-
-          {/* Top bar: brand + date */}
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <span className="h-3.5 w-0.5 rounded-full bg-primary" />
-              <span
-                className="text-[10px] font-bold uppercase tracking-[0.22em]"
-                style={{ color: "rgba(255,255,255,0.3)", fontFamily: "var(--font-space-mono)" }}
-              >
-                Lavadero la 55
-              </span>
+        {/* Brand row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: "#F97316" }}
+            >
+              <Zap className="w-3.5 h-3.5 text-white" />
             </div>
             <span
-              className="text-[10px]"
-              style={{ color: "rgba(255,255,255,0.25)", fontFamily: "var(--font-space-mono)" }}
+              className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground"
+              style={{ fontFamily: "var(--font-space-mono)" }}
             >
-              {getDateLabel()}
+              Lavadero la 55
             </span>
           </div>
-
-          {/* Greeting */}
-          <h1
-            className="text-[28px] font-extrabold leading-none tracking-tight"
-            style={{ color: "#ffffff" }}
+          <span
+            className="text-[11px] text-muted-foreground"
+            style={{ fontFamily: "var(--font-space-mono)" }}
           >
-            Hola, {firstName} 👋
-          </h1>
-
-          {/* Turno CTA */}
-          <Link
-            href="/turnos"
-            className="mt-1.5 mb-5 inline-flex items-center gap-1.5 group"
-          >
-            <span
-              className="text-xs"
-              style={{ color: "rgba(255,255,255,0.28)" }}
-            >
-              Sin turno activo
-            </span>
-            <span className="text-xs font-semibold text-primary transition-opacity group-hover:opacity-80">
-              → Abrir turno
-            </span>
-          </Link>
-
-          {/* KPI cards — glass morphism */}
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { value: kpis.todayCount,               color: "#ffffff",  label: "Autos hoy" },
-              { value: kpis.readyCount,               color: "#2dd4bf",  label: "Listos"    },
-              { value: formatRevenue(kpis.todayRevenue), color: "#F97316", label: "Ingresos" },
-            ].map(({ value, color, label }) => (
-              <div
-                key={label}
-                className="rounded-2xl px-3 py-3"
-                style={{
-                  background: "rgba(255,255,255,0.055)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                <div
-                  className="text-[26px] font-extrabold tabular-nums leading-none"
-                  style={{ color }}
-                >
-                  {value}
-                </div>
-                <div
-                  className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider"
-                  style={{ color: "rgba(255,255,255,0.3)", fontFamily: "var(--font-space-mono)" }}
-                >
-                  {label}
-                </div>
-              </div>
-            ))}
-          </div>
+            {getDateLabel()}
+          </span>
         </div>
 
-        {/* Bottom shadow bleed into workspace */}
-        <div
-          className="pointer-events-none absolute bottom-0 left-0 right-0 h-6"
-          style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.08))" }}
-        />
+        {/* Greeting */}
+        <h1 className="mt-4 text-[26px] font-extrabold tracking-tight text-foreground leading-none">
+          Hola, {firstName}
+        </h1>
+
+        {/* Turno pill */}
+        <Link
+          href="/turnos"
+          className="mt-2 inline-flex items-center gap-2 rounded-full py-1.5 px-3 transition-opacity hover:opacity-80"
+          style={{
+            background: openShift ? "#f0fdf4" : "#f5f5f5",
+            border: `1px solid ${openShift ? "#bbf7d0" : "#e5e7eb"}`,
+          }}
+        >
+          <Clock
+            className="w-3.5 h-3.5 shrink-0"
+            style={{ color: openShift ? "#16a34a" : "#9ca3af" }}
+          />
+          {openShift ? (
+            <>
+              <span className="text-xs font-semibold" style={{ color: "#16a34a" }}>
+                Turno activo
+              </span>
+              <span
+                className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
+                style={{ background: "#16a34a" }}
+              />
+            </>
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground">
+              Sin turno activo · abrir
+            </span>
+          )}
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
+        </Link>
       </div>
 
-      {/* ── LIGHT WORKSPACE ────────────────────────────────────────── */}
-      <div className="flex-1 bg-background px-4 py-5 space-y-4 md:px-6">
+      {/* ── KPI STRIP ───────────────────────────────────────────────── */}
+      <div className="px-4 pt-4 pb-1 md:px-6">
+        <div className="grid grid-cols-3 gap-2.5">
+          {kpiCards.map(({ icon: Icon, iconBg, iconColor, value, valueColor, label }) => (
+            <div
+              key={label}
+              className="bg-card rounded-2xl p-3.5 shadow-sm"
+              style={{ border: "1px solid rgba(0,0,0,0.06)" }}
+            >
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center mb-3"
+                style={{ background: iconBg }}
+              >
+                <Icon className="w-4 h-4" style={{ color: iconColor }} />
+              </div>
+              <div
+                className="text-[22px] font-extrabold leading-none tabular-nums"
+                style={{ color: valueColor, fontFamily: "var(--font-space-mono)" }}
+              >
+                {value}
+              </div>
+              <div
+                className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+              >
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── FLOOR PLAN ──────────────────────────────────────────────── */}
+      <div className="flex-1 px-4 py-4 space-y-3 md:px-6">
         <div className="flex items-center justify-between">
           <h2
-            className="text-[11px] font-bold uppercase tracking-[0.18em]"
+            className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground"
             style={{ fontFamily: "var(--font-space-mono)" }}
           >
             Planta del local
           </h2>
           <span
-            className="text-[10px]"
-            style={{ color: "var(--color-muted-foreground)", fontFamily: "var(--font-space-mono)" }}
+            className="text-[10px] text-muted-foreground flex items-center gap-1"
+            style={{ fontFamily: "var(--font-space-mono)" }}
           >
-            ↻ en vivo
+            <span
+              className="w-1.5 h-1.5 rounded-full animate-pulse"
+              style={{ background: "#22c55e" }}
+            />
+            en vivo
           </span>
         </div>
-        <FloorPlan initialData={initialSlots} />
+        <FloorPlan3DLoader initialData={initialSlots} />
       </div>
 
     </div>

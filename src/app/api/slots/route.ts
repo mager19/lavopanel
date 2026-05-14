@@ -91,14 +91,17 @@ export async function GET() {
       });
     }
 
-    // Merge slots with their active order
+    // Merge slots with their active order — derive display status from order
     const result = activeSlots.map((slot) => {
       const order = orderBySlot.get(slot.id);
+      const displayStatus = order?.status === "ready"
+        ? "ready"
+        : slot.status;
       return {
         id: slot.id,
         label: slot.label,
         kind: slot.kind,
-        status: slot.status,
+        status: displayStatus,
         position: slot.position,
         ...(order ? { order } : {}),
       };

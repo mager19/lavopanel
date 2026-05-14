@@ -6,6 +6,10 @@ import { createSlot, updateSlot } from "@/lib/services/slots";
 import { upsertParkingRate } from "@/lib/services/config";
 import { createService, updateService } from "@/lib/services/services-catalog";
 import { setBusinessConfig } from "@/lib/services/config";
+import { db } from "@/lib/db/client";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { hash } from "bcryptjs";
 
 async function requireAdmin() {
   const session = await auth();
@@ -62,6 +66,35 @@ export async function createServiceAction(formData: FormData) {
 export async function toggleServiceAction(id: number, active: boolean) {
   await requireAdmin();
   await updateService(id, { active });
+  revalidatePath("/configuracion");
+}
+
+// ── Employees ─────────────────────────────────────────────────
+
+export async function createEmployeeAction(formData: FormData) {
+  await requireAdmin();
+  const name = formData.get("name") as string;
+  const email = (formData.get("email") as string).toLowerCase().trim();
+  const password = formData.get("password") as string;
+  const role = (formData.get("role") as string) || "worker";
+
+  if (!name || !email || !password) throw new Error("Datos requeridos");
+  if (!["admin", "owner", "worker"].includes(role)) throw new Error("Rol inválido");
+
+  const passwordHash = await hash(password, 10);
+  await db.insert(users).values({ name, email, passwordHash, role: role as "admin" | "owner" | "worker" });
+  revalidatePath("/configuracion");
+}
+
+export async function toggleEmployeeAction(id: number, active: boolean) {
+  await requireAdmin();
+  await db.update(users).set({ active }).where(eq(users.id, id));
+  revalidatePath("/configuracion");
+}
+
+export async function updateEmployeeRoleAction(id: number, role: "admin" | "owner" | "worker") {
+  await requireAdmin();
+  await db.update(users).set({ role }).where(eq(users.id, id));
   revalidatePath("/configuracion");
 }
 

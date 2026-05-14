@@ -3,8 +3,9 @@ import {
   vehicleTypes,
   parkingRates,
   businessConfig,
+  users,
 } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 
 // ── Vehicle Types ──────────────────────────────────────────────
 
@@ -74,6 +75,20 @@ export async function getBusinessConfig(): Promise<
 > {
   const rows = await db.select().from(businessConfig);
   return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+}
+
+export async function getEmployees() {
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      active: users.active,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(asc(users.createdAt));
 }
 
 export async function setBusinessConfig(key: string, value: string) {
