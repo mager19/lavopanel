@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useSlots } from "@/lib/hooks/useSlots";
 import type { SlotData } from "./SlotCard";
 
@@ -175,12 +176,11 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
       {/* SVG */}
       <div className="p-4 pb-2">
         {/*
-          El SVG es una representación puramente visual. La información equivalente
-          y operable por teclado/lector de pantalla la provee SlotGrid (lista de
-          tarjetas). Por eso exponemos el SVG como una sola imagen con un resumen
-          (role="img" + aria-label) y ocultamos al árbol de accesibilidad los
-          grupos clicables individuales: el camino accesible para abrir un espacio
-          es la grilla, no el plano.
+          El SVG es una representación puramente visual: se expone como una sola
+          imagen con resumen (role="img" + aria-label) y sus grupos clicables se
+          ocultan del árbol de accesibilidad (aria-hidden). El camino accesible y
+          operable por teclado/lector de pantalla es la lista sr-only de abajo,
+          que ofrece los mismos destinos que los clicks del plano.
         */}
         <svg
           viewBox={`0 0 ${W} ${totalH}`}
@@ -219,6 +219,44 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
             </g>
           ))}
         </svg>
+      </div>
+
+      {/* Alternativa accesible al plano (visible solo para lectores de pantalla
+          y navegable por teclado). Mismos destinos que los clicks del SVG. */}
+      <div className="sr-only">
+        <p>{planSummary}</p>
+        <ul>
+          {allSlots.map((slot) => {
+            const statusLabel = (STATUS[slot.status] ?? STATUS.free).label.toLowerCase();
+            const kindLabel = slot.kind === "wash" ? "lavado" : "parqueo";
+            if (slot.status === "free") {
+              return (
+                <li key={slot.id}>
+                  <Link href={`/ingreso?slot=${encodeURIComponent(slot.label)}`}>
+                    Espacio {slot.label}, {kindLabel}, libre. Registrar vehículo.
+                  </Link>
+                </li>
+              );
+            }
+            const desc = [
+              `Espacio ${slot.label}`,
+              kindLabel,
+              statusLabel,
+              slot.order?.plate ? `placa ${slot.order.plate}` : null,
+            ]
+              .filter(Boolean)
+              .join(", ");
+            return (
+              <li key={slot.id}>
+                {slot.order?.id ? (
+                  <Link href={`/ordenes/${slot.order.id}`}>{desc}. Ver orden.</Link>
+                ) : (
+                  <span>{desc}.</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       {/* Legend strip */}

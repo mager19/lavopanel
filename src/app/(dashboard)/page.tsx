@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import { FloorPlan3DLoader } from "@/components/slots/FloorPlan3DLoader";
+import { FloorPlan } from "@/components/slots/FloorPlan";
 import { getTodayKPIs } from "@/lib/services/orders";
 import { getSlots } from "@/lib/services/slots";
 import { getOpenShift } from "@/lib/services/shifts";
@@ -199,7 +199,7 @@ export default async function DashboardPage() {
             en vivo
           </span>
         </div>
-        <FloorPlan3DLoader initialData={initialSlots} />
+        <FloorPlan initialData={initialSlots} />
       </section>
 
     </div>
