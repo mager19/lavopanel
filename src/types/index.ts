@@ -1,6 +1,11 @@
 export type UserRole = "admin" | "owner" | "worker";
 export type SlotKind = "parking" | "wash";
+// Estado PERSISTIDO en la DB (enum de la columna slots.status).
 export type SlotStatus = "free" | "occupied" | "in_progress";
+export type SlotDbStatus = SlotStatus;
+// Estado de DISPLAY: incluye "ready", derivado de la orden asociada cuando
+// está lista. NO se persiste en la DB; es solo visual.
+export type SlotDisplayStatus = SlotStatus | "ready";
 export type OrderStatus = "received" | "in_progress" | "ready" | "delivered";
 export type PlanStatus = "active" | "expired" | "cancelled";
 export type RateType = "hour" | "day";

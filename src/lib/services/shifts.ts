@@ -1,6 +1,6 @@
 import { db } from "@/lib/db/client";
 import { shifts, serviceOrders, users } from "@/lib/db/schema";
-import { eq, isNull, isNotNull, desc, and, gte, sql } from "drizzle-orm";
+import { eq, isNull, isNotNull, desc, and, sql } from "drizzle-orm";
 
 export async function getOpenShift(userId: number) {
   const [shift] = await db

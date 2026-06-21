@@ -156,7 +156,7 @@ function Slot({
 }) {
   const router = useRouter();
   const [hovered, setHovered] = useState(false);
-  const s = STATUS[(slot.status as StatusKey)] ?? STATUS.free;
+  const s = STATUS[slot.status] ?? STATUS.free;
   const isFree = slot.status === "free";
 
   const handleClick = () => {

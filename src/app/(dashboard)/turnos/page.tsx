@@ -32,9 +32,6 @@ export default async function TurnosPage() {
   if (!session?.user) redirect("/login");
 
   const userId = Number((session.user as { id?: string | number }).id ?? 0);
-  const isAdminOrOwner = ["admin", "owner"].includes(
-    (session.user as { role?: string }).role ?? ""
-  );
 
   const [openShift, history] = await Promise.all([
     userId ? getOpenShift(userId) : null,

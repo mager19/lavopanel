@@ -4,6 +4,7 @@ import { FloorPlan3DLoader } from "@/components/slots/FloorPlan3DLoader";
 import { getTodayKPIs } from "@/lib/services/orders";
 import { getSlots } from "@/lib/services/slots";
 import { getOpenShift } from "@/lib/services/shifts";
+import type { SlotDisplayStatus, SlotKind } from "@/types";
 import { Car, CheckCheck, Banknote, Clock, ChevronRight, Zap } from "lucide-react";
 
 function formatRevenue(amount: number): string {
@@ -26,8 +27,10 @@ async function getInitialSlots() {
       slots: data.map((s) => ({
         id:       s.id,
         label:    s.label,
-        kind:     s.kind   as "parking" | "wash",
-        status:   s.status as "free" | "occupied" | "in_progress" | "ready",
+        // El estado de la DB (3 valores) es un subconjunto válido del estado
+        // de display, por eso widena sin necesidad de castear.
+        kind:     s.kind satisfies SlotKind,
+        status:   s.status satisfies SlotDisplayStatus,
         position: s.position,
       })),
     };

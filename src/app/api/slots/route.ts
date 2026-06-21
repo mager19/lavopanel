@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, ne, asc, sql } from "drizzle-orm";
 import { requireSession } from "@/lib/auth-guards";
+import type { SlotDisplayStatus } from "@/types";
 
 export async function GET() {
   const guard = await requireSession();
@@ -95,12 +96,12 @@ export async function GET() {
       });
     }
 
-    // Merge slots with their active order — derive display status from order
+    // Merge slots with their active order — derive display status from order.
+    // El "ready" es solo visual: la DB nunca persiste ese estado.
     const result = activeSlots.map((slot) => {
       const order = orderBySlot.get(slot.id);
-      const displayStatus = order?.status === "ready"
-        ? "ready"
-        : slot.status;
+      const displayStatus: SlotDisplayStatus =
+        order?.status === "ready" ? "ready" : slot.status;
       return {
         id: slot.id,
         label: slot.label,

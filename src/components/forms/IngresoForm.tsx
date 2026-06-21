@@ -37,8 +37,8 @@ interface IngresoFormProps {
   preselectedSlotLabel?: string;
 }
 
-function formatPrice(cents: number) {
-  return `$${(cents / 1).toLocaleString("es-CO")}`;
+function formatPrice(amount: number) {
+  return `$${amount.toLocaleString("es-CO")}`;
 }
 
 export function IngresoForm({

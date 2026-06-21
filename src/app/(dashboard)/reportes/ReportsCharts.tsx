@@ -2,7 +2,7 @@
 
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from "recharts";
 import type { ReportData } from "@/lib/services/reports";
 

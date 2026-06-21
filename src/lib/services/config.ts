@@ -5,7 +5,7 @@ import {
   businessConfig,
   users,
 } from "@/lib/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 
 // ── Vehicle Types ──────────────────────────────────────────────
 

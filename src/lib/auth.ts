@@ -12,6 +12,7 @@ const loginSchema = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   session: { strategy: "jwt", maxAge: 60 * 60 * 8 },
   pages: {
     signIn: "/login",

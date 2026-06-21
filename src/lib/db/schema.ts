@@ -3,7 +3,6 @@ import {
   integer,
   sqliteTable,
   text,
-  real,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 

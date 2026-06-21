@@ -37,7 +37,7 @@ function SlotShape({
 }: {
   x: number; y: number; w: number; h: number; slot: SlotData;
 }) {
-  const s = STATUS[(slot.status as StatusKey)] ?? STATUS.free;
+  const s = STATUS[slot.status] ?? STATUS.free;
   const cx = x + w / 2;
   const cy = y + h / 2;
 

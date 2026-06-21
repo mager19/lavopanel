@@ -13,9 +13,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const userId = Number((session.user as { id?: string | number }).id ?? 0);
-  if (!userId) {
-    return NextResponse.json({ error: "Usuario inválido" }, { status: 400 });
+  const userId = Number((session.user as { id?: string | number }).id ?? NaN);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return NextResponse.json({ error: "Sesión inválida" }, { status: 401 });
   }
 
   const existing = await getOpenShift(userId);

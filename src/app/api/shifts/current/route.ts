@@ -8,9 +8,9 @@ export async function GET() {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const userId = Number((session.user as { id?: string | number }).id ?? 0);
-  if (!userId) {
-    return NextResponse.json({ shift: null, summary: null });
+  const userId = Number((session.user as { id?: string | number }).id ?? NaN);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return NextResponse.json({ error: "Sesión inválida" }, { status: 401 });
   }
 
   const shift = await getOpenShift(userId);

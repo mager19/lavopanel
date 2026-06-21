@@ -28,14 +28,15 @@ export async function POST(req: Request) {
 
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Datos inválidos", details: parsed.error.flatten() },
-      { status: 422 }
-    );
+    return NextResponse.json({ error: "Datos inválidos" }, { status: 422 });
+  }
+
+  const userId = Number((session.user as { id?: string | number }).id ?? NaN);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return NextResponse.json({ error: "Sesión inválida" }, { status: 401 });
   }
 
   try {
-    const userId = Number((session.user as { id?: string | number }).id ?? 0) || null;
     const order = await createOrder({
       ...parsed.data,
       userId,
