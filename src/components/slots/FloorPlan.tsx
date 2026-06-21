@@ -16,14 +16,16 @@ const STATUS = {
 type StatusKey = keyof typeof STATUS;
 
 // ── SVG layout constants ─────────────────────────────────────────
-const W   = 380;   // viewBox width
-const PAD = 14;    // horizontal padding
-const GAP = 8;     // gap between slots
-const P_H = 88;    // parking slot height
-const B_H = 108;   // wash bay height
-const LBL = 20;    // section label block height
-const SEP = 20;    // vertical gap between sections
-const RX  = 14;    // corner radius
+const W     = 380;   // viewBox width
+const PAD   = 14;    // horizontal padding
+const GAP   = 8;     // gap between slots (horizontal)
+const GAP_V = 8;     // gap between rows (vertical)
+const P_H   = 88;    // parking slot height
+const B_H   = 108;   // wash bay height
+const LBL   = 20;    // section label block height
+const SEP   = 20;    // vertical gap between sections
+const RX    = 14;    // corner radius
+const MAX_COLS = 3;  // máximo de columnas por fila (legibilidad en móvil)
 
 const MONO = "var(--font-space-mono), ui-monospace, monospace";
 const SANS = "var(--font-jakarta), system-ui, sans-serif";
@@ -67,7 +69,7 @@ function SlotShape({
         <text
           x={cx} y={cy + 9}
           fontFamily={SANS} fontSize={26} fontWeight={300}
-          fill={s.stroke} textAnchor="middle" opacity={0.75}
+          fill={s.dot} textAnchor="middle" opacity={0.9}
         >
           +
         </text>
@@ -96,8 +98,8 @@ function SlotShape({
       {/* Status label — bottom */}
       <text
         x={cx} y={y + h - 9}
-        fontFamily={SANS} fontSize={8} fontWeight={600}
-        fill={s.text} textAnchor="middle" letterSpacing={0.8} opacity={0.5}
+        fontFamily={SANS} fontSize={8} fontWeight={700}
+        fill={s.text} textAnchor="middle" letterSpacing={0.8} opacity={0.72}
       >
         {s.label}
       </text>
@@ -115,8 +117,8 @@ function Zone({
     <>
       <text
         x={x} y={y - 5}
-        fontFamily={MONO} fontSize={9} fontWeight={600}
-        fill="currentColor" opacity={0.35} letterSpacing={2}
+        fontFamily={MONO} fontSize={9} fontWeight={700}
+        fill="currentColor" opacity={0.5} letterSpacing={2}
       >
         {label}
       </text>
@@ -139,29 +141,7 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
 
   const { data, error } = useSlots(initialData);
 
-  const allSlots = data?.slots ?? [];
-  const parking  = allSlots.filter((s) => s.kind === "parking");
-  const wash     = allSlots.filter((s) => s.kind === "wash");
-
   const useW = W - PAD * 2;
-
-  // Parking row geometry
-  const pCount = Math.max(parking.length, 1);
-  const pW     = (useW - GAP * (pCount - 1)) / pCount;
-  const pY     = LBL;
-
-  // Wash row geometry
-  const wCount = Math.max(wash.length, 1);
-  const wW     = (useW - GAP * (wCount - 1)) / wCount;
-  const wY     = LBL + P_H + SEP + LBL;
-
-  const totalH = wY + B_H + PAD;
-
-  const occupiedCount = allSlots.filter((s) => s.status !== "free").length;
-  const planSummary =
-    allSlots.length > 0
-      ? `Plano del establecimiento: ${occupiedCount} de ${allSlots.length} espacios ocupados. La lista accesible de espacios está disponible debajo.`
-      : "Plano del establecimiento sin espacios configurados.";
 
   const handleClick = (slot: SlotData) => {
     if (slot.status === "free") {
@@ -170,6 +150,78 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
       router.push(`/ordenes/${slot.order.id}`);
     }
   };
+
+  // Estado de carga: aún no hay datos (ni iniciales ni de SWR).
+  if (!data) {
+    return (
+      <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden p-4">
+        <div className="h-[200px] rounded-xl bg-muted animate-pulse" />
+      </div>
+    );
+  }
+
+  const allSlots = data.slots ?? [];
+
+  // Estado vacío: no hay espacios configurados.
+  if (allSlots.length === 0) {
+    return (
+      <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden px-6 py-10 text-center">
+        <p className="text-sm font-medium text-foreground">No hay espacios configurados</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Agregá plazas y bahías desde Configuración.
+        </p>
+        {error && (
+          <p role="status" aria-live="polite" className="text-[11px] text-orange-700 mt-3">
+            No se pudo actualizar
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  const parking = allSlots.filter((s) => s.kind === "parking");
+  const wash    = allSlots.filter((s) => s.kind === "wash");
+
+  const occupiedCount = allSlots.filter((s) => s.status !== "free").length;
+  const planSummary = `Plano del establecimiento: ${occupiedCount} de ${allSlots.length} espacios ocupados. La lista accesible de espacios está disponible debajo.`;
+
+  // Layout en grilla que envuelve a varias filas (en vez de una sola fila que se
+  // comprime). Mantiene un ancho mínimo legible por espacio en móvil.
+  const layout = (list: SlotData[], yTop: number, slotH: number) => {
+    const cols = Math.min(MAX_COLS, Math.max(list.length, 1));
+    const w = (useW - GAP * (cols - 1)) / cols;
+    const positions = list.map((slot, i) => ({
+      slot,
+      x: PAD + (i % cols) * (w + GAP),
+      y: yTop + Math.floor(i / cols) * (slotH + GAP_V),
+      w,
+      h: slotH,
+    }));
+    const rows = Math.max(Math.ceil(list.length / cols), 1);
+    return { positions, height: rows * slotH + (rows - 1) * GAP_V };
+  };
+
+  // Secciones dinámicas: se omiten las zonas vacías (sin huecos verticales).
+  let cursorY = 0;
+  const sections: {
+    label: string;
+    y: number;
+    height: number;
+    positions: { slot: SlotData; x: number; y: number; w: number; h: number }[];
+  }[] = [];
+
+  for (const [list, label, slotH] of [
+    [parking, "PARQUEO", P_H],
+    [wash, "LAVADO", B_H],
+  ] as const) {
+    if (list.length === 0) continue;
+    cursorY += LBL;
+    const lay = layout(list, cursorY, slotH);
+    sections.push({ label, y: cursorY, height: lay.height, positions: lay.positions });
+    cursorY += lay.height + SEP;
+  }
+
+  const totalH = Math.max(cursorY - SEP + PAD, 60);
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
@@ -189,33 +241,19 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
           role="img"
           aria-label={planSummary}
         >
-          {/* Parking zone */}
-          {parking.length > 0 && (
-            <Zone x={PAD} y={pY} w={useW} h={P_H} label="PARQUEO" />
-          )}
-          {parking.map((slot, i) => (
-            <g
-              key={slot.id}
-              onClick={() => handleClick(slot)}
-              style={{ cursor: "pointer" }}
-              aria-hidden="true"
-            >
-              <SlotShape x={PAD + i * (pW + GAP)} y={pY} w={pW} h={P_H} slot={slot} />
-            </g>
-          ))}
-
-          {/* Wash zone */}
-          {wash.length > 0 && (
-            <Zone x={PAD} y={wY} w={useW} h={B_H} label="LAVADO" />
-          )}
-          {wash.map((slot, i) => (
-            <g
-              key={slot.id}
-              onClick={() => handleClick(slot)}
-              style={{ cursor: "pointer" }}
-              aria-hidden="true"
-            >
-              <SlotShape x={PAD + i * (wW + GAP)} y={wY} w={wW} h={B_H} slot={slot} />
+          {sections.map((sec) => (
+            <g key={sec.label}>
+              <Zone x={PAD} y={sec.y} w={useW} h={sec.height} label={sec.label} />
+              {sec.positions.map(({ slot, x, y, w, h }) => (
+                <g
+                  key={slot.id}
+                  onClick={() => handleClick(slot)}
+                  className="cursor-pointer transition-opacity hover:opacity-90 active:opacity-70"
+                  aria-hidden="true"
+                >
+                  <SlotShape x={x} y={y} w={w} h={h} slot={slot} />
+                </g>
+              ))}
             </g>
           ))}
         </svg>
