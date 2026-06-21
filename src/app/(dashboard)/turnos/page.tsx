@@ -63,19 +63,20 @@ export default async function TurnosPage() {
 
         {/* History */}
         {history.length > 0 && (
-          <section>
-            <p
+          <section aria-labelledby="shift-history-heading">
+            <h2
+              id="shift-history-heading"
               className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
               style={{ fontFamily: "var(--font-space-mono)" }}
             >
               Historial de turnos
-            </p>
-            <div className="space-y-2">
+            </h2>
+            <ul className="space-y-2 list-none">
               {history.map((shift, idx) => {
                 const s = historySummaries[idx];
                 const diff = (shift.closingCash ?? 0) - shift.openingCash;
                 return (
-                  <div
+                  <li
                     key={shift.id}
                     className="bg-card rounded-2xl border border-border/50 shadow-sm p-4"
                   >
@@ -120,16 +121,16 @@ export default async function TurnosPage() {
                         {shift.notes}
                       </p>
                     )}
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </section>
         )}
 
         {history.length === 0 && !openShift && (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
-            <span className="text-4xl">⏱️</span>
+            <span className="text-4xl" aria-hidden="true">⏱️</span>
             <p className="text-sm text-muted-foreground text-center">
               No hay turnos registrados aún.
             </p>

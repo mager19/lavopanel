@@ -47,10 +47,10 @@ export default async function MensualidadesPage() {
       />
 
       {/* Content */}
-      <div className="flex-1 bg-background px-4 py-5 space-y-4 md:px-6">
+      <section aria-label="Planes de mensualidad" className="flex-1 bg-background px-4 py-5 space-y-4 md:px-6">
         <NewPlanButton vehicleTypes={vehicleTypes} />
         <PlanList plans={plans} expiringSoon={expiringSoon} />
-      </div>
+      </section>
     </div>
   );
 }

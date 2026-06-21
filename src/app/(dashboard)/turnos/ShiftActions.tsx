@@ -145,7 +145,7 @@ export function ShiftActions({ openShift, summary }: Props) {
           {!showClose ? (
             <button
               onClick={() => setShowClose(true)}
-              className="w-full h-12 rounded-xl text-sm font-bold border-2 transition-all"
+              className="w-full h-12 rounded-xl text-sm font-bold border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               style={{
                 borderColor: "#ef4444",
                 color: "#ef4444",
@@ -198,20 +198,21 @@ export function ShiftActions({ openShift, summary }: Props) {
               </div>
 
               {error && (
-                <p className="text-sm text-destructive font-medium">{error}</p>
+                <p role="alert" className="text-sm text-destructive font-medium">{error}</p>
               )}
 
               <div className="flex gap-2">
                 <button
                   onClick={() => { setShowClose(false); setError(""); }}
-                  className="flex-1 h-11 rounded-xl text-sm font-semibold border border-border text-muted-foreground"
+                  className="flex-1 h-11 rounded-xl text-sm font-semibold border border-border text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleClose}
                   disabled={loading || !closingCash}
-                  className="flex-1 h-11 rounded-xl text-sm font-bold text-white transition-all"
+                  aria-busy={loading}
+                  className="flex-1 h-11 rounded-xl text-sm font-bold text-white transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                   style={{
                     background: loading || !closingCash ? "var(--color-muted)" : "#ef4444",
                     color: loading || !closingCash ? "var(--color-muted-foreground)" : "white",
@@ -250,13 +251,14 @@ export function ShiftActions({ openShift, summary }: Props) {
         </div>
 
         {error && (
-          <p className="text-sm text-destructive font-medium mb-3">{error}</p>
+          <p role="alert" className="text-sm text-destructive font-medium mb-3">{error}</p>
         )}
 
         <button
           onClick={handleOpen}
           disabled={loading}
-          className="w-full h-12 rounded-xl text-sm font-bold text-white transition-all"
+          aria-busy={loading}
+          className="w-full h-12 rounded-xl text-sm font-bold text-white transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
           style={{
             background: loading ? "var(--color-muted)" : "#22c55e",
             color: loading ? "var(--color-muted-foreground)" : "white",

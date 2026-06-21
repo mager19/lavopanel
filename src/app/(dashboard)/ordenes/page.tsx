@@ -54,10 +54,10 @@ export default async function OrdenesPage() {
       />
 
       {/* ── Lista ───────────────────────────────────────────── */}
-      <div className="flex-1 bg-background px-4 py-5 space-y-3 md:px-6">
+      <section aria-label="Lista de órdenes activas" className="flex-1 bg-background px-4 py-5 space-y-3 md:px-6">
         {orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <span className="text-4xl">🚗</span>
+            <span className="text-4xl" aria-hidden="true">🚗</span>
             <p className="text-muted-foreground text-sm text-center">
               No hay órdenes activas.{" "}
               <Link href="/ingreso" className="text-primary font-semibold">
@@ -66,15 +66,17 @@ export default async function OrdenesPage() {
             </p>
           </div>
         ) : (
-          orders.map((order) => {
+          <ul className="space-y-3 list-none">
+          {orders.map((order) => {
             const statusColor = STATUS_COLOR[order.status] ?? "#9ca3af";
             const label = STATUS_LABEL[order.status] ?? order.status;
             const elapsed = timeAgo(order.createdAt);
 
             return (
+              <li key={order.id}>
               <Link
-                key={order.id}
                 href={`/ordenes/${order.id}`}
+                aria-label={`Orden ${order.vehicle?.plate ?? ""}, estado ${label}`}
                 className="block bg-card rounded-2xl border border-border/50 shadow-sm p-4 transition-all active:scale-[0.99]"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -124,7 +126,13 @@ export default async function OrdenesPage() {
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
                   <span className="text-xs text-muted-foreground">
-                    {order.employee ? `👷 ${order.employee.name}` : "Sin empleado"}
+                    {order.employee ? (
+                      <>
+                        <span aria-hidden="true">👷</span> {order.employee.name}
+                      </>
+                    ) : (
+                      "Sin empleado"
+                    )}
                     {order.slotId ? ` · Espacio ${order.slotId}` : ""}
                   </span>
                   <span
@@ -135,19 +143,22 @@ export default async function OrdenesPage() {
                   </span>
                 </div>
               </Link>
+              </li>
             );
-          })
+          })}
+          </ul>
         )}
-      </div>
+      </section>
 
       {/* ── FAB nuevo ingreso ───────────────────────────────── */}
       <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-20">
         <Link
           href="/ingreso"
+          aria-label="Registrar nuevo ingreso"
           className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-transform active:scale-95"
           style={{ background: "var(--color-primary)" }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </Link>

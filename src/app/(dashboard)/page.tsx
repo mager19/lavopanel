@@ -90,7 +90,7 @@ export default async function DashboardPage() {
               className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
               style={{ background: "var(--color-primary)" }}
             >
-              <Zap className="w-3.5 h-3.5 text-white" />
+              <Zap className="w-3.5 h-3.5 text-white" aria-hidden="true" />
             </div>
             <span
               className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground"
@@ -124,6 +124,7 @@ export default async function DashboardPage() {
           <Clock
             className="w-3.5 h-3.5 shrink-0"
             style={{ color: openShift ? "#16a34a" : "#9ca3af" }}
+            aria-hidden="true"
           />
           {openShift ? (
             <>
@@ -133,6 +134,7 @@ export default async function DashboardPage() {
               <span
                 className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
                 style={{ background: "#16a34a" }}
+                aria-hidden="true"
               />
             </>
           ) : (
@@ -140,12 +142,12 @@ export default async function DashboardPage() {
               Sin turno activo · abrir
             </span>
           )}
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" aria-hidden="true" />
         </Link>
       </div>
 
       {/* ── KPI STRIP ───────────────────────────────────────────────── */}
-      <div className="px-4 pt-4 pb-1 md:px-6">
+      <section aria-label="Resumen del día" className="px-4 pt-4 pb-1 md:px-6">
         <div className="grid grid-cols-3 gap-2.5">
           {kpiCards.map(({ icon: Icon, iconBg, iconColor, value, valueColor, label }) => (
             <div
@@ -157,7 +159,7 @@ export default async function DashboardPage() {
                 className="w-8 h-8 rounded-xl flex items-center justify-center mb-3"
                 style={{ background: iconBg }}
               >
-                <Icon className="w-4 h-4" style={{ color: iconColor }} />
+                <Icon className="w-4 h-4" style={{ color: iconColor }} aria-hidden="true" />
               </div>
               <div
                 className="text-[22px] font-extrabold leading-none tabular-nums"
@@ -173,12 +175,13 @@ export default async function DashboardPage() {
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* ── FLOOR PLAN ──────────────────────────────────────────────── */}
-      <div className="flex-1 px-4 py-4 space-y-3 md:px-6">
+      <section aria-labelledby="floor-plan-heading" className="flex-1 px-4 py-4 space-y-3 md:px-6">
         <div className="flex items-center justify-between">
           <h2
+            id="floor-plan-heading"
             className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground"
             style={{ fontFamily: "var(--font-space-mono)" }}
           >
@@ -191,12 +194,13 @@ export default async function DashboardPage() {
             <span
               className="w-1.5 h-1.5 rounded-full animate-pulse"
               style={{ background: "#22c55e" }}
+              aria-hidden="true"
             />
             en vivo
           </span>
         </div>
         <FloorPlan3DLoader initialData={initialSlots} />
-      </div>
+      </section>
 
     </div>
   );

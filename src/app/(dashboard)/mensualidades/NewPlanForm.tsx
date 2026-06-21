@@ -83,21 +83,24 @@ export function NewPlanForm({ vehicleTypes, onCancel }: Props) {
       {/* Plate + type */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Placa *</label>
+          <label htmlFor="plan-plate" className="text-xs text-muted-foreground mb-1 block">Placa *</label>
           <input
+            id="plan-plate"
             type="text"
             value={plate}
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
             placeholder="ABC123"
             required
             maxLength={12}
+            autoComplete="off"
             className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:ring-primary/30"
             style={{ fontFamily: "var(--font-space-mono)", letterSpacing: "0.1em" }}
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Tipo *</label>
+          <label htmlFor="plan-vehicle-type" className="text-xs text-muted-foreground mb-1 block">Tipo *</label>
           <select
+            id="plan-vehicle-type"
             value={vehicleTypeId}
             onChange={(e) => setVehicleTypeId(Number(e.target.value))}
             className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -112,8 +115,9 @@ export function NewPlanForm({ vehicleTypes, onCancel }: Props) {
       {/* Dates + amount */}
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Inicio *</label>
+          <label htmlFor="plan-start-date" className="text-xs text-muted-foreground mb-1 block">Inicio *</label>
           <input
+            id="plan-start-date"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -122,8 +126,9 @@ export function NewPlanForm({ vehicleTypes, onCancel }: Props) {
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Fin *</label>
+          <label htmlFor="plan-end-date" className="text-xs text-muted-foreground mb-1 block">Fin *</label>
           <input
+            id="plan-end-date"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
@@ -133,8 +138,9 @@ export function NewPlanForm({ vehicleTypes, onCancel }: Props) {
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Valor *</label>
+          <label htmlFor="plan-amount" className="text-xs text-muted-foreground mb-1 block">Valor *</label>
           <input
+            id="plan-amount"
             type="text"
             inputMode="numeric"
             value={amount}
@@ -149,19 +155,24 @@ export function NewPlanForm({ vehicleTypes, onCancel }: Props) {
       {/* Owner info (optional) */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Nombre dueño</label>
+          <label htmlFor="plan-owner-name" className="text-xs text-muted-foreground mb-1 block">Nombre dueño</label>
           <input
+            id="plan-owner-name"
             type="text"
             value={ownerName}
             onChange={(e) => setOwnerName(e.target.value)}
             placeholder="Carlos Pérez"
+            autoComplete="name"
             className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Teléfono</label>
+          <label htmlFor="plan-owner-phone" className="text-xs text-muted-foreground mb-1 block">Teléfono</label>
           <input
+            id="plan-owner-phone"
             type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             value={ownerPhone}
             onChange={(e) => setOwnerPhone(e.target.value)}
             placeholder="3001234567"
@@ -172,8 +183,9 @@ export function NewPlanForm({ vehicleTypes, onCancel }: Props) {
 
       {/* Notes */}
       <div>
-        <label className="text-xs text-muted-foreground mb-1 block">Notas</label>
+        <label htmlFor="plan-notes" className="text-xs text-muted-foreground mb-1 block">Notas</label>
         <textarea
+          id="plan-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Observaciones..."
@@ -182,7 +194,7 @@ export function NewPlanForm({ vehicleTypes, onCancel }: Props) {
         />
       </div>
 
-      {error && <p className="text-sm text-destructive font-medium">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive font-medium">{error}</p>}
 
       <div className="flex gap-2">
         <button

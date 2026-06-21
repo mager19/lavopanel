@@ -56,8 +56,9 @@ export default async function OrderDetailPage({ params }: Props) {
           <Link
             href="/ordenes"
             className="flex items-center justify-center w-8 h-8 rounded-xl border border-border/60 text-muted-foreground hover:bg-muted transition-colors"
+            aria-label="Volver a órdenes"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           </Link>
           <span
             className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider"
@@ -94,7 +95,7 @@ export default async function OrderDetailPage({ params }: Props) {
                 border: `1px solid ${meta.color}30`,
               }}
             >
-              {meta.icon} {meta.label}
+              <span aria-hidden="true">{meta.icon}</span> {meta.label}
             </div>
           </div>
         </div>
@@ -106,9 +107,9 @@ export default async function OrderDetailPage({ params }: Props) {
         {/* Estado actual + stepper */}
         <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">{meta.icon}</span>
+            <span className="text-2xl" aria-hidden="true">{meta.icon}</span>
             <div>
-              <p className="font-semibold text-foreground">{meta.label}</p>
+              <h2 className="font-semibold text-foreground">{meta.label}</h2>
               <p className="text-xs text-muted-foreground">Estado actual</p>
             </div>
           </div>
@@ -152,15 +153,15 @@ export default async function OrderDetailPage({ params }: Props) {
 
         {/* Servicios */}
         <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
-          <p
+          <h2
             className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
             style={{ fontFamily: "var(--font-space-mono)" }}
           >
             Servicios
-          </p>
-          <div className="flex flex-col divide-y divide-border/40">
+          </h2>
+          <ul className="flex flex-col divide-y divide-border/40 list-none">
             {order.items.map((item) => (
-              <div key={item.id} className="flex justify-between items-center py-2.5">
+              <li key={item.id} className="flex justify-between items-center py-2.5">
                 <span className="text-sm font-medium text-foreground">
                   {item.service?.name ?? "Servicio"}
                 </span>
@@ -170,9 +171,9 @@ export default async function OrderDetailPage({ params }: Props) {
                 >
                   {formatPrice(item.priceSnapshot)}
                 </span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <div className="flex justify-between items-center pt-3 mt-1 border-t border-border/60">
             <span className="text-sm font-bold text-foreground">Total</span>
             <span
@@ -186,12 +187,12 @@ export default async function OrderDetailPage({ params }: Props) {
 
         {/* Info */}
         <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
-          <p
+          <h2
             className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
             style={{ fontFamily: "var(--font-space-mono)" }}
           >
             Detalles
-          </p>
+          </h2>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
             {[
               ["Empleado",    order.employee?.name ?? "—"],
@@ -219,7 +220,7 @@ export default async function OrderDetailPage({ params }: Props) {
 
         {isDelivered && (
           <div className="flex flex-col items-center gap-2 py-4">
-            <span className="text-3xl">🎉</span>
+            <span className="text-3xl" aria-hidden="true">🎉</span>
             <p className="text-sm text-muted-foreground font-medium">Orden completada y entregada</p>
             <Link
               href="/ordenes"

@@ -128,32 +128,34 @@ export function IngresoForm({
 
       {/* ── Placa ──────────────────────────────────────────────── */}
       <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
-        <label className="block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2"
+        <label htmlFor="ingreso-plate" className="block text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2"
           style={{ fontFamily: "var(--font-space-mono)" }}>
           Placa del vehículo
         </label>
         <input
+          id="ingreso-plate"
           type="text"
           value={plate}
           onChange={(e) => setPlate(e.target.value.toUpperCase())}
           placeholder="ABC 123"
           maxLength={10}
-          className="w-full text-center text-3xl font-bold tracking-[0.25em] uppercase bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground/30"
+          className="w-full text-center text-3xl font-bold tracking-[0.25em] uppercase bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-lg"
           style={{ fontFamily: "var(--font-space-mono)" }}
           autoFocus
           autoComplete="off"
           autoCapitalize="characters"
+          aria-describedby={error ? "ingreso-error" : undefined}
         />
         <div className="mt-2 h-px bg-border/60 rounded-full" />
       </section>
 
       {/* ── Tipo de vehículo ────────────────────────────────── */}
       <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
+        <p id="ingreso-type-label" className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
           style={{ fontFamily: "var(--font-space-mono)" }}>
           Tipo
         </p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="ingreso-type-label">
           {vehicleTypes.map((vt) => {
             const active = vehicleTypeId === vt.id;
             return (
@@ -161,7 +163,8 @@ export function IngresoForm({
                 key={vt.id}
                 type="button"
                 onClick={() => handleTypeChange(vt.id)}
-                className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all"
+                aria-pressed={active}
+                className="flex items-center justify-center gap-2 min-h-[44px] py-3 rounded-xl font-semibold text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                 style={{
                   background: active ? "var(--color-primary)" : "var(--color-muted)",
                   color: active ? "#fff" : "var(--color-muted-foreground)",
@@ -179,7 +182,7 @@ export function IngresoForm({
       {/* ── Servicios ──────────────────────────────────────── */}
       {vehicleTypeId !== null && (
         <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
+          <p id="ingreso-services-label" className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
             style={{ fontFamily: "var(--font-space-mono)" }}>
             Servicios
           </p>
@@ -188,7 +191,7 @@ export function IngresoForm({
               Sin servicios configurados para este tipo
             </p>
           ) : (
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5" role="group" aria-labelledby="ingreso-services-label">
               {filteredServices.map((svc) => {
                 const active = selectedServices.includes(svc.id);
                 return (
@@ -196,7 +199,8 @@ export function IngresoForm({
                     key={svc.id}
                     type="button"
                     onClick={() => toggleService(svc.id)}
-                    className="flex items-center justify-between px-3 py-3 rounded-xl transition-all text-left"
+                    aria-pressed={active}
+                    className="flex items-center justify-between min-h-[44px] px-3 py-3 rounded-xl transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
                     style={{
                       background: active ? "rgba(249,115,22,0.08)" : "var(--color-muted)/30",
                       border: active
@@ -208,6 +212,7 @@ export function IngresoForm({
                   >
                     <div className="flex items-center gap-3">
                       <div
+                        aria-hidden="true"
                         className="w-4 h-4 rounded flex items-center justify-center shrink-0"
                         style={{
                           background: active ? "var(--color-primary)" : "var(--color-border)",
@@ -242,7 +247,7 @@ export function IngresoForm({
 
       {/* ── Slot ────────────────────────────────────────────── */}
       <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
+        <p id="ingreso-slot-label" className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
           style={{ fontFamily: "var(--font-space-mono)" }}>
           Espacio asignado
         </p>
@@ -251,11 +256,12 @@ export function IngresoForm({
             Sin espacios libres disponibles
           </p>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ingreso-slot-label">
             <button
               type="button"
               onClick={() => setSlotId(null)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              aria-pressed={slotId === null}
+              className="min-h-[44px] px-3 py-1.5 rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
               style={{
                 background: slotId === null ? "var(--color-muted)" : "transparent",
                 border: slotId === null ? "1.5px solid var(--color-border)" : "1.5px solid var(--color-border)/40",
@@ -271,7 +277,9 @@ export function IngresoForm({
                   key={s.id}
                   type="button"
                   onClick={() => setSlotId(s.id)}
-                  className="px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
+                  aria-pressed={active}
+                  aria-label={`Espacio ${s.label}`}
+                  className="min-h-[44px] px-3 py-1.5 rounded-lg text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
                   style={{
                     fontFamily: "var(--font-space-mono)",
                     background: active ? "var(--color-primary)" : "var(--color-muted)",
@@ -296,16 +304,18 @@ export function IngresoForm({
       {workers.length > 0 && (
         <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
           <p
+            id="ingreso-employee-label"
             className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
             style={{ fontFamily: "var(--font-space-mono)" }}
           >
             Empleado asignado
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ingreso-employee-label">
             <button
               type="button"
               onClick={() => setEmployeeId(null)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              aria-pressed={employeeId === null}
+              className="min-h-[44px] px-3 py-1.5 rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
               style={{
                 background: employeeId === null ? "var(--color-muted)" : "transparent",
                 border: "1.5px solid var(--color-border)",
@@ -321,7 +331,8 @@ export function IngresoForm({
                   key={w.id}
                   type="button"
                   onClick={() => setEmployeeId(w.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all"
+                  aria-pressed={active}
+                  className="flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 rounded-lg text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
                   style={{
                     background: active ? "var(--color-primary)" : "var(--color-muted)",
                     color: active ? "#fff" : "var(--color-foreground)",
@@ -329,6 +340,7 @@ export function IngresoForm({
                   }}
                 >
                   <span
+                    aria-hidden="true"
                     className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
                     style={{
                       background: active ? "rgba(255,255,255,0.25)" : "var(--color-border)",
@@ -350,36 +362,43 @@ export function IngresoForm({
         <button
           type="button"
           onClick={() => setShowClient(!showClient)}
-          className="w-full flex items-center justify-between px-4 py-3.5"
+          aria-expanded={showClient}
+          aria-controls="ingreso-client-panel"
+          className="w-full flex items-center justify-between min-h-[44px] px-4 py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-2xl"
         >
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground"
             style={{ fontFamily: "var(--font-space-mono)" }}>
             Datos del cliente (opcional)
           </p>
-          <span className="text-muted-foreground text-sm">{showClient ? "▲" : "▼"}</span>
+          <span aria-hidden="true" className="text-muted-foreground text-sm">{showClient ? "▲" : "▼"}</span>
         </button>
 
         {showClient && (
-          <div className="px-4 pb-4 flex flex-col gap-3">
+          <div id="ingreso-client-panel" className="px-4 pb-4 flex flex-col gap-3">
             <div className="h-px bg-border/40" />
             <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Nombre</label>
+              <label htmlFor="ingreso-owner-name" className="text-xs text-muted-foreground font-medium mb-1 block">Nombre</label>
               <input
+                id="ingreso-owner-name"
                 type="text"
                 value={ownerName}
                 onChange={(e) => setOwnerName(e.target.value)}
                 placeholder="Nombre del propietario"
-                className="w-full h-11 px-3 rounded-xl bg-muted/50 border border-border text-sm outline-none focus:border-primary transition-colors"
+                autoComplete="name"
+                className="w-full h-11 px-3 rounded-xl bg-muted/50 border border-border text-sm outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition-colors"
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Teléfono</label>
+              <label htmlFor="ingreso-owner-phone" className="text-xs text-muted-foreground font-medium mb-1 block">Teléfono</label>
               <input
+                id="ingreso-owner-phone"
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={ownerPhone}
                 onChange={(e) => setOwnerPhone(e.target.value)}
                 placeholder="300 000 0000"
-                className="w-full h-11 px-3 rounded-xl bg-muted/50 border border-border text-sm outline-none focus:border-primary transition-colors"
+                className="w-full h-11 px-3 rounded-xl bg-muted/50 border border-border text-sm outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition-colors"
               />
             </div>
           </div>
@@ -389,7 +408,7 @@ export function IngresoForm({
       {/* ── Total + Submit ──────────────────────────────────── */}
       <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm pt-3 pb-4 -mx-4 px-4 border-t border-border/40">
         {error && (
-          <p className="text-sm text-destructive font-medium mb-2 text-center">{error}</p>
+          <p id="ingreso-error" role="alert" className="text-sm text-destructive font-medium mb-2 text-center">{error}</p>
         )}
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-muted-foreground">Total</span>

@@ -17,7 +17,10 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-[0_-2px_12px_rgba(0,0,0,0.08)] md:hidden">
+    <nav
+      aria-label="Navegación principal"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-[0_-2px_12px_rgba(0,0,0,0.08)] md:hidden"
+    >
       <div className="flex items-center justify-around h-16 px-2">
         {NAV_ITEMS.map(({ href, icon: Icon, label, isFab }) => {
           const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
@@ -27,10 +30,12 @@ export function BottomNav() {
               <Link
                 key={href}
                 href={href}
-                className="flex flex-col items-center justify-center -mt-5"
+                aria-label={label}
+                aria-current={isActive ? "page" : undefined}
+                className="flex flex-col items-center justify-center -mt-5 min-h-[44px] rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               >
                 <span className="bg-primary text-primary-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-md">
-                  <Icon className="w-6 h-6" />
+                  <Icon className="w-6 h-6" aria-hidden="true" />
                 </span>
                 <span className="text-[10px] mt-1 text-muted-foreground font-medium">
                   {label}
@@ -43,7 +48,8 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
+              aria-current={isActive ? "page" : undefined}
+              className="flex flex-col items-center justify-center gap-0.5 flex-1 min-h-[44px] py-2 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
             >
               <span
                 className={cn(
@@ -56,6 +62,7 @@ export function BottomNav() {
                     "w-5 h-5 transition-colors",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
+                  aria-hidden="true"
                 />
               </span>
               <span

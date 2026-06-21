@@ -45,6 +45,46 @@ const statusLabel: Record<string, string> = {
   ready: "LISTO",
 };
 
+// Texto legible (no en mayúsculas) para lectores de pantalla
+const statusA11yLabel: Record<string, string> = {
+  free: "libre",
+  occupied: "ocupado",
+  in_progress: "en lavado",
+  ready: "listo",
+};
+
+const kindA11yLabel: Record<string, string> = {
+  parking: "parqueo",
+  wash: "lavado",
+};
+
+// Construye un aria-label descriptivo a partir de los datos disponibles del slot.
+// Ej.: "Espacio A1, lavado, ocupado, placa ABC123. Ver orden."
+function buildSlotAriaLabel(slot: SlotData): string {
+  const parts: string[] = [`Espacio ${slot.label}`];
+
+  const kind = kindA11yLabel[slot.kind];
+  if (kind) parts.push(kind);
+
+  parts.push(statusA11yLabel[slot.status] ?? slot.status);
+
+  if (slot.status !== "free" && slot.order) {
+    if (slot.order.plate) parts.push(`placa ${slot.order.plate}`);
+    if (slot.order.service) parts.push(slot.order.service);
+    if (slot.order.employee) parts.push(`atiende ${slot.order.employee}`);
+  }
+
+  let sentence = parts.join(", ") + ".";
+
+  if (slot.status === "free") {
+    sentence += " Registrar vehículo.";
+  } else if (slot.order) {
+    sentence += " Ver orden.";
+  }
+
+  return sentence;
+}
+
 function ElapsedTime({ startedAt }: { startedAt: string | null }) {
   const [minutes, setMinutes] = useState<number | null>(null);
 
@@ -76,7 +116,7 @@ export function SlotCard({ slot }: { slot: SlotData }) {
 
   const cardContent = (
     <div
-      className={`bg-card shadow-sm rounded-2xl border-l-4 ${border} p-4 flex flex-col gap-2 h-full`}
+      className={`bg-card shadow-sm rounded-2xl border-l-4 ${border} p-4 flex flex-col gap-2 h-full min-h-[7rem]`}
     >
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -87,6 +127,7 @@ export function SlotCard({ slot }: { slot: SlotData }) {
           className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full ${badge}`}
         >
           <span
+            aria-hidden="true"
             className={`w-1.5 h-1.5 rounded-full ${
               slot.status === "in_progress"
                 ? "bg-blue-500 animate-pulse"
@@ -105,7 +146,7 @@ export function SlotCard({ slot }: { slot: SlotData }) {
       {slot.status === "free" ? (
         <div className="flex-1 flex items-center justify-center">
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
             Asignar
           </span>
         </div>
@@ -113,7 +154,7 @@ export function SlotCard({ slot }: { slot: SlotData }) {
         <div className="flex flex-col gap-1.5 flex-1">
           {/* Plate */}
           <div className="flex items-center gap-2">
-            <Car className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Car className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
             <span className="font-mono font-bold tracking-widest text-sm text-foreground">
               {slot.order.plate ?? "—"}
             </span>
@@ -146,11 +187,18 @@ export function SlotCard({ slot }: { slot: SlotData }) {
     </div>
   );
 
+  const ariaLabel = buildSlotAriaLabel(slot);
+
+  // Estilo de foco visible compartido por los enlaces interactivos.
+  const linkClass =
+    "block h-full min-h-[44px] rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
   if (slot.status === "free") {
     return (
       <Link
         href={`/ingreso?slot=${encodeURIComponent(slot.label)}`}
-        className="block h-full"
+        className={linkClass}
+        aria-label={ariaLabel}
       >
         {cardContent}
       </Link>
@@ -159,11 +207,21 @@ export function SlotCard({ slot }: { slot: SlotData }) {
 
   if (slot.order) {
     return (
-      <Link href={`/ordenes/${slot.order.id}`} className="block h-full">
+      <Link
+        href={`/ordenes/${slot.order.id}`}
+        className={linkClass}
+        aria-label={ariaLabel}
+      >
         {cardContent}
       </Link>
     );
   }
 
-  return cardContent;
+  // Slot no interactivo (ocupado sin orden asociada): expone su estado por texto,
+  // sin foco ni rol interactivo para no confundir al usuario de teclado.
+  return (
+    <div role="group" aria-label={ariaLabel}>
+      {cardContent}
+    </div>
+  );
 }

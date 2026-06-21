@@ -26,7 +26,7 @@ export function PageHeader({
               className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
               style={{ background: iconBg }}
             >
-              <Icon className="w-5 h-5" style={{ color: iconColor }} />
+              <Icon className="w-5 h-5" style={{ color: iconColor }} aria-hidden="true" />
             </div>
           )}
           <div>

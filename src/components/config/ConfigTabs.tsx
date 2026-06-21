@@ -140,12 +140,15 @@ function PlazasTab({ slots }: { slots: Slot[] }) {
           <p className="text-sm font-medium">Nueva plaza</p>
           <div className="flex gap-3">
             <Input
+              id="slot-label"
+              aria-label="Etiqueta de la plaza"
               placeholder="Etiqueta (ej: A1)"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               className="h-10 rounded-xl flex-1"
             />
             <select
+              aria-label="Tipo de plaza"
               value={kind}
               onChange={(e) => setKind(e.target.value as "parking" | "wash")}
               className="h-10 rounded-xl border border-input bg-transparent px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
@@ -177,6 +180,7 @@ function PlazasTab({ slots }: { slots: Slot[] }) {
               <SlotBadge kind={slot.kind} />
             </div>
             <Switch
+              aria-label={`Activar plaza ${slot.label}`}
               checked={slot.active ?? true}
               onCheckedChange={(checked: boolean) =>
                 handleToggle(slot.id, checked)
@@ -247,11 +251,13 @@ function TarifasTab({
           </div>
           <div className="space-y-2">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">
+              <label htmlFor={`rate-hour-${vt.id}`} className="text-xs text-muted-foreground mb-1 block">
                 Por hora ($COP)
               </label>
               <Input
+                id={`rate-hour-${vt.id}`}
                 type="number"
+                inputMode="numeric"
                 placeholder="0"
                 value={getRate(vt.id, "hour")}
                 onChange={(e) => setRate(vt.id, "hour", e.target.value)}
@@ -259,11 +265,13 @@ function TarifasTab({
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">
+              <label htmlFor={`rate-day-${vt.id}`} className="text-xs text-muted-foreground mb-1 block">
                 Por día ($COP)
               </label>
               <Input
+                id={`rate-day-${vt.id}`}
                 type="number"
+                inputMode="numeric"
                 placeholder="0"
                 value={getRate(vt.id, "day")}
                 onChange={(e) => setRate(vt.id, "day", e.target.value)}
@@ -362,15 +370,17 @@ function ServiciosTab({
         <div className="bg-card shadow-sm rounded-2xl p-4 space-y-3 border border-border">
           <p className="text-sm font-medium">Nuevo servicio</p>
           <Input
+            aria-label="Nombre del servicio"
             placeholder="Nombre del servicio"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             className="h-10 rounded-xl"
           />
           <select
+            aria-label="Tipo de vehículo del servicio"
             value={formVehicleTypeId}
             onChange={(e) => setFormVehicleTypeId(e.target.value)}
-            className="h-10 w-full rounded-xl border border-input bg-transparent px-3 text-sm outline-none focus:border-ring"
+            className="h-10 w-full rounded-xl border border-input bg-transparent px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
           >
             <option value="">Tipo de vehículo</option>
             {vehicleTypes.map((vt) => (
@@ -383,7 +393,9 @@ function ServiciosTab({
           <div className="flex gap-3">
             <div className="flex-1">
               <Input
+                aria-label="Precio del servicio en pesos"
                 type="number"
+                inputMode="numeric"
                 placeholder="Precio ($COP)"
                 value={formPrice}
                 onChange={(e) => setFormPrice(e.target.value)}
@@ -392,7 +404,9 @@ function ServiciosTab({
             </div>
             <div className="flex-1">
               <Input
+                aria-label="Minutos estimados del servicio"
                 type="number"
+                inputMode="numeric"
                 placeholder="Minutos estimados"
                 value={formMinutes}
                 onChange={(e) => setFormMinutes(e.target.value)}
@@ -440,6 +454,7 @@ function ServiciosTab({
                       </p>
                     </div>
                     <Switch
+                      aria-label={`Activar servicio ${svc.name}`}
                       checked={svc.active ?? true}
                       onCheckedChange={(checked: boolean) =>
                         handleToggle(svc.id, checked)
@@ -470,6 +485,7 @@ function ServiciosTab({
                     </p>
                   </div>
                   <Switch
+                    aria-label={`Activar servicio ${svc.name}`}
                     checked={svc.active ?? true}
                     onCheckedChange={(checked: boolean) =>
                       handleToggle(svc.id, checked)
@@ -515,22 +531,25 @@ function NegocioTab({
     <div className="bg-card shadow-sm rounded-2xl p-5 border border-border max-w-md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-sm font-medium block mb-1">
+          <label htmlFor="business_name" className="text-sm font-medium block mb-1">
             Nombre del local
           </label>
           <Input
+            id="business_name"
             name="business_name"
             defaultValue={businessConfig.business_name ?? ""}
             placeholder="Mi Lavadero"
+            autoComplete="organization"
             className="h-12 rounded-xl"
           />
         </div>
         <div className="flex gap-3">
           <div className="flex-1">
-            <label className="text-sm font-medium block mb-1">
+            <label htmlFor="open_time" className="text-sm font-medium block mb-1">
               Hora apertura
             </label>
             <Input
+              id="open_time"
               name="open_time"
               type="time"
               defaultValue={businessConfig.open_time ?? "07:00"}
@@ -538,10 +557,11 @@ function NegocioTab({
             />
           </div>
           <div className="flex-1">
-            <label className="text-sm font-medium block mb-1">
+            <label htmlFor="close_time" className="text-sm font-medium block mb-1">
               Hora cierre
             </label>
             <Input
+              id="close_time"
               name="close_time"
               type="time"
               defaultValue={businessConfig.close_time ?? "18:00"}
@@ -550,11 +570,13 @@ function NegocioTab({
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium block mb-1">Ciudad</label>
+          <label htmlFor="city" className="text-sm font-medium block mb-1">Ciudad</label>
           <Input
+            id="city"
             name="city"
             defaultValue={businessConfig.city ?? ""}
             placeholder="Bogotá"
+            autoComplete="address-level2"
             className="h-12 rounded-xl"
           />
         </div>
@@ -618,21 +640,21 @@ function EmpleadosTab({ employees }: { employees: EmployeeRow[] }) {
           <p className="text-sm font-semibold">Nuevo usuario</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Nombre</label>
-              <Input name="name" placeholder="Juan García" required className="h-10 rounded-xl" />
+              <label htmlFor="emp-name" className="text-xs text-muted-foreground mb-1 block">Nombre</label>
+              <Input id="emp-name" name="name" placeholder="Juan García" required autoComplete="name" className="h-10 rounded-xl" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Email</label>
-              <Input name="email" type="email" placeholder="juan@lavadero.com" required className="h-10 rounded-xl" />
+              <label htmlFor="emp-email" className="text-xs text-muted-foreground mb-1 block">Email</label>
+              <Input id="emp-email" name="email" type="email" placeholder="juan@lavadero.com" required autoComplete="email" className="h-10 rounded-xl" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Contraseña temporal</label>
-              <Input name="password" type="password" placeholder="••••••••" required minLength={6} className="h-10 rounded-xl" />
+              <label htmlFor="emp-password" className="text-xs text-muted-foreground mb-1 block">Contraseña temporal</label>
+              <Input id="emp-password" name="password" type="password" placeholder="••••••••" required minLength={6} autoComplete="new-password" className="h-10 rounded-xl" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Rol</label>
+              <label htmlFor="emp-role" className="text-xs text-muted-foreground mb-1 block">Rol</label>
               <Select name="role" defaultValue="worker">
-                <SelectTrigger className="h-10 rounded-xl">
+                <SelectTrigger id="emp-role" className="h-10 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -643,7 +665,7 @@ function EmpleadosTab({ employees }: { employees: EmployeeRow[] }) {
               </Select>
             </div>
           </div>
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
           <Button type="submit" disabled={isPending} className="w-full h-10 rounded-xl">
             {isPending ? "Creando..." : "Crear usuario"}
           </Button>
@@ -674,7 +696,7 @@ function EmpleadosTab({ employees }: { employees: EmployeeRow[] }) {
                   )
                 }
               >
-                <SelectTrigger className="h-8 w-28 rounded-lg text-xs">
+                <SelectTrigger aria-label={`Rol de ${emp.name}`} className="h-8 w-28 rounded-lg text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -684,6 +706,7 @@ function EmpleadosTab({ employees }: { employees: EmployeeRow[] }) {
                 </SelectContent>
               </Select>
               <Switch
+                aria-label={`Activar usuario ${emp.name}`}
                 checked={emp.active ?? true}
                 onCheckedChange={(val) =>
                   startTransition(() => toggleEmployeeAction(emp.id, val))

@@ -48,12 +48,13 @@ export function AdvanceButton({ orderId, currentStatus }: Props) {
   return (
     <div className="pb-4">
       {error && (
-        <p className="text-sm text-destructive font-medium mb-2 text-center">{error}</p>
+        <p role="alert" className="text-sm text-destructive font-medium mb-2 text-center">{error}</p>
       )}
       <button
         onClick={handleAdvance}
         disabled={loading}
-        className="w-full h-14 rounded-2xl text-base font-bold text-white transition-all active:scale-[0.98]"
+        aria-busy={loading}
+        className="w-full h-14 rounded-2xl text-base font-bold text-white transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
         style={{
           background: loading ? "var(--color-muted)" : color,
           cursor: loading ? "not-allowed" : "pointer",

@@ -56,11 +56,12 @@ export function PlanList({ plans, expiringSoon }: Props) {
       {/* Expiring soon alert */}
       {expiringSoon.length > 0 && (
         <div
+          role="alert"
           className="rounded-2xl border p-4 space-y-2"
           style={{ background: "#fff7ed", borderColor: "#fed7aa" }}
         >
           <p className="text-sm font-semibold" style={{ color: "#c2410c" }}>
-            ⚠️ {expiringSoon.length} plan{expiringSoon.length !== 1 ? "es" : ""} por vencer
+            <span aria-hidden="true">⚠️</span> {expiringSoon.length} plan{expiringSoon.length !== 1 ? "es" : ""} por vencer
           </p>
           {expiringSoon.map((p) => {
             const days = daysLeft(p.endDate);
@@ -141,7 +142,9 @@ export function PlanList({ plans, expiringSoon }: Props) {
                   <button
                     onClick={() => handleCancel(plan.id)}
                     disabled={cancelling === plan.id}
-                    className="text-xs font-semibold text-destructive hover:opacity-70 transition-opacity"
+                    aria-busy={cancelling === plan.id}
+                    aria-label={`Cancelar plan mensual de ${plan.vehicle?.plate ?? "vehículo"}`}
+                    className="text-xs font-semibold text-destructive hover:opacity-70 transition-opacity inline-flex items-center min-h-[44px] -my-3 py-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                   >
                     {cancelling === plan.id ? "Cancelando..." : "Cancelar plan"}
                   </button>

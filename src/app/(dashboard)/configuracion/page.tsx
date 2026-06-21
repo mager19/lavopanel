@@ -21,9 +21,9 @@ export default async function ConfiguracionPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-2">
-          <p className="text-xl font-semibold text-muted-foreground">
+          <h1 className="text-xl font-semibold text-muted-foreground">
             Sin acceso
-          </p>
+          </h1>
           <p className="text-sm text-muted-foreground">
             Solo administradores y propietarios pueden ver esta sección.
           </p>
@@ -51,7 +51,7 @@ export default async function ConfiguracionPage() {
         iconColor="#6b7280"
         iconBg="#f9fafb"
       />
-      <div className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
+      <section aria-label="Opciones de configuración" className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
         <ConfigTabs
           slots={slots}
           services={services}
@@ -60,7 +60,7 @@ export default async function ConfiguracionPage() {
           businessConfig={businessConfig}
           employees={employees}
         />
-      </div>
+      </section>
     </div>
   );
 }

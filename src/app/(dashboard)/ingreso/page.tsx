@@ -49,15 +49,16 @@ export default async function IngresoPage({ searchParams }: Props) {
           <Link
             href="/"
             className="flex items-center justify-center w-8 h-8 rounded-xl border border-border/60 text-muted-foreground hover:bg-muted transition-colors"
+            aria-label="Volver al inicio"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           </Link>
           <div className="flex items-center gap-2.5 flex-1">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
               style={{ background: "#fff7ed" }}
             >
-              <Plus className="w-4.5 h-4.5" style={{ color: "var(--color-primary)" }} />
+              <Plus className="w-4.5 h-4.5" style={{ color: "var(--color-primary)" }} aria-hidden="true" />
             </div>
             <div>
               <h1 className="text-[22px] font-extrabold tracking-tight text-foreground leading-tight">
@@ -82,7 +83,7 @@ export default async function IngresoPage({ searchParams }: Props) {
       </div>
 
       {/* ── Formulario ─────────────────────────────────────── */}
-      <div className="flex-1 bg-background px-4 pt-5 md:px-6">
+      <section aria-label="Formulario de registro de vehículo" className="flex-1 bg-background px-4 pt-5 md:px-6">
         <IngresoForm
           vehicleTypes={vehicleTypes}
           services={allServices}
@@ -90,7 +91,7 @@ export default async function IngresoPage({ searchParams }: Props) {
           workers={workers}
           preselectedSlotLabel={preselectedSlot}
         />
-      </div>
+      </section>
 
     </div>
   );

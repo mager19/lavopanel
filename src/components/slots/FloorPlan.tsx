@@ -156,6 +156,12 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
 
   const totalH = wY + B_H + PAD;
 
+  const occupiedCount = allSlots.filter((s) => s.status !== "free").length;
+  const planSummary =
+    allSlots.length > 0
+      ? `Plano del establecimiento: ${occupiedCount} de ${allSlots.length} espacios ocupados. La lista accesible de espacios está disponible debajo.`
+      : "Plano del establecimiento sin espacios configurados.";
+
   const handleClick = (slot: SlotData) => {
     if (slot.status === "free") {
       router.push(`/ingreso?slot=${encodeURIComponent(slot.label)}`);
@@ -168,18 +174,32 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
     <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
       {/* SVG */}
       <div className="p-4 pb-2">
+        {/*
+          El SVG es una representación puramente visual. La información equivalente
+          y operable por teclado/lector de pantalla la provee SlotGrid (lista de
+          tarjetas). Por eso exponemos el SVG como una sola imagen con un resumen
+          (role="img" + aria-label) y ocultamos al árbol de accesibilidad los
+          grupos clicables individuales: el camino accesible para abrir un espacio
+          es la grilla, no el plano.
+        */}
         <svg
           viewBox={`0 0 ${W} ${totalH}`}
           className="w-full"
           style={{ height: "auto" }}
-          aria-label="Planta del local"
+          role="img"
+          aria-label={planSummary}
         >
           {/* Parking zone */}
           {parking.length > 0 && (
             <Zone x={PAD} y={pY} w={useW} h={P_H} label="PARQUEO" />
           )}
           {parking.map((slot, i) => (
-            <g key={slot.id} onClick={() => handleClick(slot)} style={{ cursor: "pointer" }}>
+            <g
+              key={slot.id}
+              onClick={() => handleClick(slot)}
+              style={{ cursor: "pointer" }}
+              aria-hidden="true"
+            >
               <SlotShape x={PAD + i * (pW + GAP)} y={pY} w={pW} h={P_H} slot={slot} />
             </g>
           ))}
@@ -189,7 +209,12 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
             <Zone x={PAD} y={wY} w={useW} h={B_H} label="LAVADO" />
           )}
           {wash.map((slot, i) => (
-            <g key={slot.id} onClick={() => handleClick(slot)} style={{ cursor: "pointer" }}>
+            <g
+              key={slot.id}
+              onClick={() => handleClick(slot)}
+              style={{ cursor: "pointer" }}
+              aria-hidden="true"
+            >
               <SlotShape x={PAD + i * (wW + GAP)} y={wY} w={wW} h={B_H} slot={slot} />
             </g>
           ))}
@@ -200,13 +225,13 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
       <div className="px-4 py-3 border-t border-border/40 bg-muted/20 flex flex-wrap items-center gap-x-4 gap-y-1">
         {(Object.entries(STATUS) as [StatusKey, (typeof STATUS)[StatusKey]][]).map(([key, cfg]) => (
           <div key={key} className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cfg.dot }} />
+            <span aria-hidden="true" className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cfg.dot }} />
             <span className="text-[11px] text-muted-foreground font-medium">{cfg.label}</span>
           </div>
         ))}
         {error && (
-          <span className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+          <span role="status" aria-live="polite" className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
+            <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
             No se pudo actualizar
           </span>
         )}

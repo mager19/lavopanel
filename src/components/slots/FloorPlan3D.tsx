@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import * as THREE from "three";
 import { useSlots } from "@/lib/hooks/useSlots";
 import type { SlotData } from "./SlotCard";
@@ -390,6 +391,7 @@ function Legend({ hasError }: { hasError?: boolean }) {
         ([, cfg]) => (
           <div key={cfg.label} className="flex items-center gap-1.5">
             <span
+              aria-hidden="true"
               className="w-2 h-2 rounded-full shrink-0"
               style={{ backgroundColor: cfg.dot }}
             />
@@ -400,8 +402,8 @@ function Legend({ hasError }: { hasError?: boolean }) {
         )
       )}
       {hasError && (
-        <span className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+        <span role="status" aria-live="polite" className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
+          <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
           No se pudo actualizar
         </span>
       )}
@@ -418,10 +420,20 @@ export function FloorPlan3D({ initialData }: FloorPlan3DProps) {
   const { data, error } = useSlots(initialData);
 
   const slots = data?.slots ?? [];
+  const occupiedCount = slots.filter((s) => s.status !== "free").length;
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
-      <div style={{ height: 340 }}>
+      {/*
+        El render 3D (WebGL) es puramente visual: no es navegable por teclado ni
+        por lectores de pantalla, así que el contenedor del canvas se oculta del
+        árbol de accesibilidad (aria-hidden). NO usamos `inert`: el plano SÍ es
+        interactivo con mouse (un click en un espacio navega a ingreso/orden), e
+        `inert` anularía esos eventos de puntero. El camino accesible para teclado
+        y lectores de pantalla es la lista sr-only de abajo, que ofrece los mismos
+        destinos que los clicks del plano.
+      */}
+      <div style={{ height: 340 }} aria-hidden="true">
         <Canvas
           shadows
           dpr={[1, 2]}
@@ -431,6 +443,48 @@ export function FloorPlan3D({ initialData }: FloorPlan3DProps) {
           <Scene slots={slots} />
         </Canvas>
       </div>
+
+      {/* Alternativa accesible al plano 3D (visible solo para lectores de pantalla
+          y navegable por teclado). Ofrece los mismos destinos que los clicks. */}
+      <div className="sr-only">
+        <p>
+          Plano del establecimiento: {occupiedCount} de {slots.length} espacios
+          ocupados. Lista de espacios:
+        </p>
+        <ul>
+          {slots.map((slot) => {
+            const statusLabel = (STATUS[slot.status] ?? STATUS.free).label.toLowerCase();
+            const kindLabel = slot.kind === "wash" ? "lavado" : "parqueo";
+            if (slot.status === "free") {
+              return (
+                <li key={slot.id}>
+                  <Link href={`/ingreso?slot=${encodeURIComponent(slot.label)}`}>
+                    Espacio {slot.label}, {kindLabel}, libre. Registrar vehículo.
+                  </Link>
+                </li>
+              );
+            }
+            const desc = [
+              `Espacio ${slot.label}`,
+              kindLabel,
+              statusLabel,
+              slot.order?.plate ? `placa ${slot.order.plate}` : null,
+            ]
+              .filter(Boolean)
+              .join(", ");
+            return (
+              <li key={slot.id}>
+                {slot.order?.id ? (
+                  <Link href={`/ordenes/${slot.order.id}`}>{desc}. Ver orden.</Link>
+                ) : (
+                  <span>{desc}.</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
       <Legend hasError={!!error} />
     </div>
   );
