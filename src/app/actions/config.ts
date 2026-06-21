@@ -6,6 +6,7 @@ import { createSlot, updateSlot, deleteSlot } from "@/lib/services/slots";
 import { upsertParkingRate } from "@/lib/services/config";
 import { createService, updateService } from "@/lib/services/services-catalog";
 import { setBusinessConfig } from "@/lib/services/config";
+import { liquidateWorker } from "@/lib/services/liquidation";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -54,6 +55,11 @@ const createEmployeeSchema = z.object({
 const updateEmployeeRoleSchema = z.object({
   id: z.number().int().positive("ID inválido"),
   role: roleSchema,
+});
+
+const updateCommissionSchema = z.object({
+  id: z.number().int().positive("ID inválido"),
+  percent: z.number().int().min(0, "Mínimo 0%").max(100, "Máximo 100%"),
 });
 
 const businessConfigSchema = z.record(
@@ -214,6 +220,24 @@ export async function updateEmployeeRoleAction(id: number, role: "admin" | "owne
   assertCanAssignRole(session.user.role as string, v.role);
   await db.update(users).set({ role: v.role }).where(eq(users.id, v.id));
   revalidatePath("/configuracion");
+}
+
+export async function updateEmployeeCommissionAction(id: number, percent: number) {
+  await requireAdmin();
+  const v = validate(updateCommissionSchema, { id, percent });
+  await db
+    .update(users)
+    .set({ commissionPercent: v.percent })
+    .where(eq(users.id, v.id));
+  revalidatePath("/configuracion");
+}
+
+export async function liquidateWorkerAction(workerId: number) {
+  await requireAdmin();
+  const { id } = validate(idSchema, { id: workerId });
+  const result = await liquidateWorker(id);
+  revalidatePath("/configuracion");
+  return result;
 }
 
 // ── Business Config ────────────────────────────────────────────

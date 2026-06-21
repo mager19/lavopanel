@@ -84,6 +84,7 @@ export async function getEmployees() {
       name: users.name,
       email: users.email,
       role: users.role,
+      commissionPercent: users.commissionPercent,
       active: users.active,
       createdAt: users.createdAt,
     })

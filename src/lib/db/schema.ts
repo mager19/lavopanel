@@ -19,6 +19,9 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["admin", "owner", "worker"] }).notNull(),
+  // % de comisión del trabajador sobre el servicio de lavado (0-100). Editable;
+  // se congela (snapshot) en cada orden al crearla.
+  commissionPercent: integer("commission_percent").notNull().default(0),
   active: integer("active", { mode: "boolean" }).default(true),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
@@ -110,6 +113,10 @@ export const serviceOrders = sqliteTable("service_orders", {
     .notNull()
     .default("received"),
   total: integer("total").notNull(),
+  // Snapshot del % de comisión del empleado al crear la orden (lavado).
+  commissionPercent: integer("commission_percent").notNull().default(0),
+  // Marca de liquidación: cuándo se le pagó esta orden al trabajador.
+  liquidatedAt: integer("liquidated_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),

@@ -338,17 +338,31 @@ export async function createOrder({
 
     const total = selectedServices.reduce((sum, s) => sum + s.price, 0);
 
+    // Snapshot del % de comisión del empleado asignado (congelado en la orden
+    // para que la liquidación use el valor vigente al momento del ingreso).
+    const effectiveEmployeeId = employeeId ?? userId ?? null;
+    let commissionPercent = 0;
+    if (effectiveEmployeeId) {
+      const emp = await tx
+        .select({ pct: users.commissionPercent })
+        .from(users)
+        .where(eq(users.id, effectiveEmployeeId))
+        .get();
+      commissionPercent = emp?.pct ?? 0;
+    }
+
     // Create order
     const [order] = await tx
       .insert(serviceOrders)
       .values({
         vehicleId: vehicle.id,
         slotId: slotId ?? null,
-        employeeId: employeeId ?? userId ?? null,
+        employeeId: effectiveEmployeeId,
         shiftId,
         kind: "wash",
         status: "received",
         total,
+        commissionPercent,
       })
       .returning();
 

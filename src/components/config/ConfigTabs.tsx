@@ -24,6 +24,8 @@ import {
   createEmployeeAction,
   toggleEmployeeAction,
   updateEmployeeRoleAction,
+  updateEmployeeCommissionAction,
+  liquidateWorkerAction,
 } from "@/app/actions/config";
 import type { Slot, VehicleType } from "@/lib/db/schema";
 
@@ -55,6 +57,9 @@ type EmployeeRow = {
   name: string;
   email: string;
   role: "admin" | "owner" | "worker";
+  commissionPercent: number;
+  pendingCommission: number;
+  pendingOrders: number;
   active: boolean | null;
   createdAt: Date | null;
 };
@@ -716,54 +721,150 @@ function EmpleadosTab({ employees }: { employees: EmployeeRow[] }) {
         {employees.map((emp) => (
           <div
             key={emp.id}
-            className="flex items-center justify-between gap-3 bg-card border border-border/50 rounded-2xl px-4 py-3"
+            className="bg-card border border-border/50 rounded-2xl px-4 py-3 space-y-3"
           >
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-semibold text-foreground truncate">{emp.name}</p>
-                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${ROLE_COLOR[emp.role]}`}>
-                  {ROLE_LABEL[emp.role]}
-                </span>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-foreground truncate">{emp.name}</p>
+                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${ROLE_COLOR[emp.role]}`}>
+                    {ROLE_LABEL[emp.role]}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground truncate">{emp.email}</p>
               </div>
-              <p className="text-xs text-muted-foreground truncate">{emp.email}</p>
+              <div className="flex items-center gap-2 shrink-0">
+                {emp.role === "owner" ? (
+                  // El dueño es único y de sistema: no se puede cambiar de rol ni desactivar.
+                  <span className="text-[10px] text-muted-foreground italic">Super admin</span>
+                ) : (
+                  <>
+                    <Select
+                      defaultValue={emp.role}
+                      onValueChange={(val) =>
+                        startTransition(() =>
+                          updateEmployeeRoleAction(emp.id, val as "admin" | "owner" | "worker")
+                        )
+                      }
+                    >
+                      <SelectTrigger aria-label={`Rol de ${emp.name}`} className="h-8 w-28 rounded-lg text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="worker">Trabajador</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Switch
+                      aria-label={`Activar usuario ${emp.name}`}
+                      checked={emp.active ?? true}
+                      onCheckedChange={(val) =>
+                        startTransition(() => toggleEmployeeAction(emp.id, val))
+                      }
+                    />
+                  </>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {emp.role === "owner" ? (
-                // El dueño es único y de sistema: no se puede cambiar de rol ni desactivar.
-                <span className="text-[10px] text-muted-foreground italic">Super admin</span>
-              ) : (
-                <>
-                  <Select
-                    defaultValue={emp.role}
-                    onValueChange={(val) =>
-                      startTransition(() =>
-                        updateEmployeeRoleAction(emp.id, val as "admin" | "owner" | "worker")
-                      )
-                    }
-                  >
-                    <SelectTrigger aria-label={`Rol de ${emp.name}`} className="h-8 w-28 rounded-lg text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="worker">Trabajador</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Switch
-                    aria-label={`Activar usuario ${emp.name}`}
-                    checked={emp.active ?? true}
-                    onCheckedChange={(val) =>
-                      startTransition(() => toggleEmployeeAction(emp.id, val))
-                    }
-                  />
-                </>
-              )}
-            </div>
+
+            {emp.role === "worker" && <WorkerPayRow emp={emp} />}
           </div>
         ))}
       </div>
     </div>
   );
+}
+
+// ─── Comisión + liquidación de un trabajador ──────────────────
+function WorkerPayRow({ emp }: { emp: EmployeeRow }) {
+  const [percent, setPercent] = useState(String(emp.commissionPercent));
+  const [isPending, startTransition] = useTransition();
+  const [msg, setMsg] = useState("");
+
+  const dirty = percent !== String(emp.commissionPercent);
+
+  const saveCommission = () => {
+    const n = Number(percent);
+    if (!Number.isInteger(n) || n < 0 || n > 100) {
+      setMsg("El % debe ser un entero entre 0 y 100");
+      return;
+    }
+    setMsg("");
+    startTransition(async () => {
+      try {
+        await updateEmployeeCommissionAction(emp.id, n);
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : "No se pudo guardar");
+      }
+    });
+  };
+
+  const liquidar = () => {
+    if (emp.pendingCommission <= 0) return;
+    if (!confirm(`Liquidar a ${emp.name}: ${formatMoney(emp.pendingCommission)} en ${emp.pendingOrders} orden(es)?`)) return;
+    setMsg("");
+    startTransition(async () => {
+      try {
+        const r = await liquidateWorkerAction(emp.id);
+        setMsg(`Liquidado: ${formatMoney(r.commissionTotal)} (${r.orderCount} órdenes)`);
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : "No se pudo liquidar");
+      }
+    });
+  };
+
+  return (
+    <div className="border-t border-border/40 pt-3 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <label htmlFor={`comm-${emp.id}`} className="text-[11px] text-muted-foreground block mb-1">
+          Comisión (% del lavado)
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            id={`comm-${emp.id}`}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={100}
+            value={percent}
+            onChange={(e) => setPercent(e.target.value)}
+            className="h-9 w-20 px-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+          />
+          <span className="text-sm text-muted-foreground">%</span>
+          {dirty && (
+            <Button size="sm" onClick={saveCommission} disabled={isPending} className="h-9 rounded-lg">
+              Guardar
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="text-right">
+        <p className="text-[11px] text-muted-foreground mb-1">
+          Pendiente ({emp.pendingOrders} órd.)
+        </p>
+        <div className="flex items-center gap-2 justify-end">
+          <span className="text-sm font-bold" style={{ fontFamily: "var(--font-space-mono)", color: "var(--color-primary)" }}>
+            {formatMoney(emp.pendingCommission)}
+          </span>
+          <button
+            type="button"
+            onClick={liquidar}
+            disabled={isPending || emp.pendingCommission <= 0}
+            className="h-9 px-3 rounded-lg text-sm font-semibold bg-green-600 text-white disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-green-500"
+          >
+            Liquidar
+          </button>
+        </div>
+      </div>
+
+      {msg && <p role="status" className="w-full text-[11px] text-muted-foreground">{msg}</p>}
+    </div>
+  );
+}
+
+function formatMoney(n: number) {
+  return `$${n.toLocaleString("es-CO")}`;
 }
 
 // ─── Main ConfigTabs ──────────────────────────────────────────

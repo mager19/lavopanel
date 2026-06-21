@@ -15,6 +15,13 @@
       "when": 1782065803959,
       "tag": "0001_panoramic_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1782066825815,
+      "tag": "0002_spotty_sentry",
+      "breakpoints": true
     }
   ]
 }

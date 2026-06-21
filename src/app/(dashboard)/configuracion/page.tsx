@@ -7,6 +7,7 @@ import {
   getBusinessConfig,
   getEmployees,
 } from "@/lib/services/config";
+import { getPendingCommissionByWorker } from "@/lib/services/liquidation";
 import { ConfigTabs } from "@/components/config/ConfigTabs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Settings2 } from "lucide-react";
@@ -32,7 +33,7 @@ export default async function ConfiguracionPage() {
     );
   }
 
-  const [slots, services, vehicleTypes, parkingRates, businessConfig, employees] =
+  const [slots, services, vehicleTypes, parkingRates, businessConfig, employeeRows, pendingByWorker] =
     await Promise.all([
       getAllSlots(),
       getAllServices(),
@@ -40,7 +41,15 @@ export default async function ConfiguracionPage() {
       getParkingRates(),
       getBusinessConfig(),
       getEmployees(),
+      getPendingCommissionByWorker(),
     ]);
+
+  // Adjunta la comisión pendiente (no liquidada) a cada empleado.
+  const employees = employeeRows.map((e) => ({
+    ...e,
+    pendingCommission: pendingByWorker.get(e.id)?.commissionTotal ?? 0,
+    pendingOrders: pendingByWorker.get(e.id)?.orderCount ?? 0,
+  }));
 
   return (
     <div className="flex flex-col min-h-full">
