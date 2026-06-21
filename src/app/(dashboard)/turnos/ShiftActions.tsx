@@ -10,6 +10,7 @@ interface ShiftSummary {
 
 interface OpenShift {
   id: number;
+  code: string;
   openedAt: Date | null;
   openingCash: number;
 }
@@ -17,6 +18,8 @@ interface OpenShift {
 interface Props {
   openShift: OpenShift | null;
   summary: ShiftSummary | null;
+  canClose: boolean;
+  openedBy?: string | null;
 }
 
 function formatPrice(cents: number) {
@@ -40,7 +43,7 @@ function formatTime(d: Date | null | undefined) {
   }).format(new Date(d));
 }
 
-export function ShiftActions({ openShift, summary }: Props) {
+export function ShiftActions({ openShift, summary, canClose, openedBy }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -108,7 +111,20 @@ export function ShiftActions({ openShift, summary }: Props) {
               className="w-2 h-2 rounded-full animate-pulse"
               style={{ background: "#22c55e" }}
             />
-            <p className="text-sm font-semibold text-foreground">Turno en curso</p>
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-foreground">Turno en curso</p>
+                <span
+                  className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                  style={{ fontFamily: "var(--font-space-mono)" }}
+                >
+                  {openShift.code}
+                </span>
+              </div>
+              {openedBy && (
+                <p className="text-[11px] text-muted-foreground">Abierto por {openedBy}</p>
+              )}
+            </div>
             <span className="ml-auto text-xs text-muted-foreground font-mono">
               {formatDuration(openShift.openedAt)}
             </span>
@@ -142,7 +158,11 @@ export function ShiftActions({ openShift, summary }: Props) {
             </span>
           </div>
 
-          {!showClose ? (
+          {!canClose ? (
+            <p className="text-xs text-muted-foreground text-center py-1">
+              Solo el dueño o un administrador puede cerrar el turno.
+            </p>
+          ) : !showClose ? (
             <button
               onClick={() => setShowClose(true)}
               className="w-full h-12 rounded-xl text-sm font-bold border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"

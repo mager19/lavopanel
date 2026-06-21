@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getOpenShift, getShiftSummary, getShiftHistory } from "@/lib/services/shifts";
+import { getAnyOpenShift, getShiftSummary, getShiftHistory } from "@/lib/services/shifts";
 import { ShiftActions } from "./ShiftActions";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Clock } from "lucide-react";
@@ -31,10 +31,11 @@ export default async function TurnosPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const userId = Number((session.user as { id?: string | number }).id ?? 0);
+  const role = (session.user as { role?: string }).role;
+  const canClose = role === "admin" || role === "owner";
 
   const [openShift, history] = await Promise.all([
-    userId ? getOpenShift(userId) : null,
+    getAnyOpenShift(),
     getShiftHistory(15),
   ]);
 
@@ -59,7 +60,12 @@ export default async function TurnosPage() {
       <div className="flex-1 bg-background px-4 py-5 space-y-5 md:px-6">
 
         {/* Open/close actions */}
-        <ShiftActions openShift={openShift} summary={summary} />
+        <ShiftActions
+          openShift={openShift}
+          summary={summary}
+          canClose={canClose}
+          openedBy={openShift?.user?.name ?? null}
+        />
 
         {/* History */}
         {history.length > 0 && (
@@ -82,9 +88,17 @@ export default async function TurnosPage() {
                   >
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {shift.user?.name ?? "Usuario"}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                            style={{ fontFamily: "var(--font-space-mono)" }}
+                          >
+                            {shift.code}
+                          </span>
+                          <p className="text-sm font-semibold text-foreground">
+                            {shift.user?.name ?? "Usuario"}
+                          </p>
+                        </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {formatDateTime(shift.openedAt)} →{" "}
                           {formatDateTime(shift.closedAt)} ·{" "}

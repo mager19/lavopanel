@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getOpenShift, closeShift, getShiftSummary } from "@/lib/services/shifts";
+import { getAnyOpenShift, closeShift, getShiftSummary } from "@/lib/services/shifts";
 import { z } from "zod";
 
 const schema = z.object({
@@ -14,15 +14,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const userId = Number((session.user as { id?: string | number }).id ?? NaN);
-  if (!Number.isInteger(userId) || userId <= 0) {
-    return NextResponse.json({ error: "Sesión inválida" }, { status: 401 });
+  // Cerrar el turno (caja) es responsabilidad de dueño o administrador.
+  const role = (session.user as { role?: string }).role;
+  if (role !== "admin" && role !== "owner") {
+    return NextResponse.json(
+      { error: "Solo el dueño o un administrador puede cerrar el turno" },
+      { status: 403 }
+    );
   }
 
-  const openShift = await getOpenShift(userId);
+  const openShift = await getAnyOpenShift();
   if (!openShift) {
     return NextResponse.json(
-      { error: "No tienes un turno abierto" },
+      { error: "No hay un turno abierto" },
       { status: 404 }
     );
   }

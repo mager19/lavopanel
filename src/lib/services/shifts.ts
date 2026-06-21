@@ -2,6 +2,18 @@ import { db } from "@/lib/db/client";
 import { shifts, serviceOrders, users } from "@/lib/db/schema";
 import { eq, isNull, isNotNull, desc, and, sql } from "drizzle-orm";
 
+// Código legible del turno: fecha local (Colombia, -5h) + "-N", donde N es el
+// número de turno de ese día (1, 2, ...). Se calcula con una subconsulta que
+// cuenta los turnos del mismo día abiertos hasta este inclusive.
+const shiftCode = sql<string>`
+  date(${shifts.openedAt}, 'unixepoch', '-5 hours') || '-' || (
+    select count(*) from shifts s2
+    where date(s2.opened_at, 'unixepoch', '-5 hours')
+        = date(${shifts.openedAt}, 'unixepoch', '-5 hours')
+      and s2.opened_at <= ${shifts.openedAt}
+  )
+`;
+
 export async function getOpenShift(userId: number) {
   const [shift] = await db
     .select({
@@ -56,6 +68,7 @@ export async function getShiftHistory(limit = 20) {
   const rows = await db
     .select({
       id: shifts.id,
+      code: shiftCode,
       openedAt: shifts.openedAt,
       closedAt: shifts.closedAt,
       openingCash: shifts.openingCash,
@@ -75,6 +88,7 @@ export async function getAnyOpenShift() {
   const [shift] = await db
     .select({
       id: shifts.id,
+      code: shiftCode,
       openedAt: shifts.openedAt,
       openingCash: shifts.openingCash,
       user: { id: users.id, name: users.name },

@@ -318,16 +318,14 @@ export async function createOrder({
   // Todo el ingreso (vehículo + orden + items + ocupar slot) corre en una
   // transacción: si algo falla a mitad, no quedan datos huérfanos.
   return db.transaction(async (tx) => {
-    // Find open shift for this user
-    let shiftId: number | null = null;
-    if (userId) {
-      const openShift = await tx
-        .select({ id: shifts.id })
-        .from(shifts)
-        .where(and(eq(shifts.userId, userId), isNull(shifts.closedAt)))
-        .get();
-      shiftId = openShift?.id ?? null;
-    }
+    // Vincula la orden al turno abierto del local (modelo de caja única: un
+    // solo turno abierto a la vez, sin importar qué usuario lo abrió).
+    const openShift = await tx
+      .select({ id: shifts.id })
+      .from(shifts)
+      .where(isNull(shifts.closedAt))
+      .get();
+    const shiftId = openShift?.id ?? null;
 
     // Upsert vehicle
     const vehicle = await upsertVehicle(

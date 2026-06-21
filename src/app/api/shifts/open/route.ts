@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getOpenShift, openShift } from "@/lib/services/shifts";
+import { getAnyOpenShift, openShift } from "@/lib/services/shifts";
 import { z } from "zod";
 
 const schema = z.object({
@@ -18,10 +18,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Sesión inválida" }, { status: 401 });
   }
 
-  const existing = await getOpenShift(userId);
+  // Caja única: no se puede abrir si ya hay un turno abierto (de cualquiera).
+  const existing = await getAnyOpenShift();
   if (existing) {
     return NextResponse.json(
-      { error: "Ya tienes un turno abierto" },
+      { error: "Ya hay un turno abierto" },
       { status: 409 }
     );
   }

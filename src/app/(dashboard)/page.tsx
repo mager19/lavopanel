@@ -4,7 +4,7 @@ import { FloorPlan } from "@/components/slots/FloorPlan";
 import { WaitingQueue } from "@/components/slots/WaitingQueue";
 import { getTodayKPIs, getWaitingOrders } from "@/lib/services/orders";
 import { getSlots } from "@/lib/services/slots";
-import { getOpenShift } from "@/lib/services/shifts";
+import { getAnyOpenShift } from "@/lib/services/shifts";
 import type { SlotDisplayStatus, SlotKind } from "@/types";
 import { Car, CheckCheck, Banknote, Clock, ChevronRight, Zap } from "lucide-react";
 import { LogoutButton } from "@/components/layout/LogoutButton";
@@ -55,8 +55,7 @@ export default async function DashboardPage() {
   const initialSlots = { slots: slotsData.slots };
   const freeSlots = slotsData.freeSlots;
 
-  const userId = Number((session?.user as { id?: string | number })?.id ?? 0);
-  const openShift = userId ? await getOpenShift(userId) : null;
+  const openShift = await getAnyOpenShift();
   const firstName = session?.user?.name?.split(" ")[0];
 
   const kpiCards = [
