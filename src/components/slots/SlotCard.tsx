@@ -18,7 +18,7 @@ export type SlotOrder = {
 export type SlotData = {
   id: number;
   label: string;
-  kind: "parking" | "wash";
+  kind: "parking" | "wash" | "monthly";
   status: "free" | "occupied" | "in_progress" | "ready";
   position: number | null;
   order?: SlotOrder;
@@ -56,6 +56,7 @@ const statusA11yLabel: Record<string, string> = {
 const kindA11yLabel: Record<string, string> = {
   parking: "parqueo",
   wash: "lavado",
+  monthly: "mensualidad",
 };
 
 // Construye un aria-label descriptivo a partir de los datos disponibles del slot.

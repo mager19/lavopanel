@@ -29,13 +29,23 @@ interface Worker {
   role: string;
 }
 
+interface ParkingRate {
+  vehicleTypeId: number;
+  rateType: "hour" | "day";
+  amount: number;
+}
+
 interface IngresoFormProps {
   vehicleTypes: VehicleType[];
   services: Service[];
   freeSlots: SlotOption[];
   workers: Worker[];
+  parkingRates: ParkingRate[];
   preselectedSlotLabel?: string;
 }
+
+type Mode = "wash" | "parking";
+type RateType = "hour" | "day";
 
 function formatPrice(amount: number) {
   return `$${amount.toLocaleString("es-CO")}`;
@@ -46,14 +56,17 @@ export function IngresoForm({
   services,
   freeSlots,
   workers,
+  parkingRates,
   preselectedSlotLabel,
 }: IngresoFormProps) {
   const router = useRouter();
   const defaultSlot = freeSlots.find((s) => s.label === preselectedSlotLabel) ?? null;
 
+  const [mode, setMode] = useState<Mode>("wash");
   const [plate, setPlate] = useState("");
   const [vehicleTypeId, setVehicleTypeId] = useState<number | null>(null);
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
+  const [parkingRateType, setParkingRateType] = useState<RateType>("hour");
   const [slotId, setSlotId] = useState<number | null>(defaultSlot?.id ?? null);
   const [employeeId, setEmployeeId] = useState<number | null>(null);
   const [ownerName, setOwnerName] = useState("");
@@ -66,10 +79,28 @@ export function IngresoForm({
     ? services.filter((s) => s.vehicleTypeId === vehicleTypeId)
     : [];
 
-  const total = selectedServices.reduce((sum, id) => {
+  // Espacios disponibles según la modalidad: lavado usa bahías; parqueo usa
+  // plazas de parqueo o de mensualidad.
+  const availableSlots = freeSlots.filter((s) =>
+    mode === "wash" ? s.kind === "wash" : s.kind === "parking" || s.kind === "monthly"
+  );
+
+  // Tarifa de parqueo vigente para el tipo de vehículo + hora/día seleccionados.
+  const parkingRate =
+    mode === "parking" && vehicleTypeId !== null
+      ? parkingRates.find(
+          (r) => r.vehicleTypeId === vehicleTypeId && r.rateType === parkingRateType
+        )?.amount ?? 0
+      : 0;
+
+  const washTotal = selectedServices.reduce((sum, id) => {
     const s = services.find((sv) => sv.id === id);
     return sum + (s?.price ?? 0);
   }, 0);
+
+  // Monto a mostrar: lavado = suma de servicios; parqueo día = tarifa fija;
+  // parqueo hora = tarifa por hora (el total real se calcula a la salida).
+  const total = mode === "wash" ? washTotal : parkingRate;
 
   const toggleService = (id: number) => {
     setSelectedServices((prev) =>
@@ -82,15 +113,26 @@ export function IngresoForm({
     setSelectedServices([]);
   };
 
+  const handleModeChange = (m: Mode) => {
+    setMode(m);
+    setSelectedServices([]);
+    setSlotId(null);
+    if (m === "parking") setEmployeeId(null);
+  };
+
   const canSubmit =
     plate.trim().length >= 3 &&
     vehicleTypeId !== null &&
-    selectedServices.length > 0;
+    (mode === "wash" ? selectedServices.length > 0 : true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) {
-      setError("Completa la placa, tipo de vehículo y al menos un servicio.");
+      setError(
+        mode === "wash"
+          ? "Completa la placa, tipo de vehículo y al menos un servicio."
+          : "Completa la placa y el tipo de vehículo."
+      );
       return;
     }
 
@@ -104,9 +146,11 @@ export function IngresoForm({
         body: JSON.stringify({
           plate: plate.trim().toUpperCase(),
           vehicleTypeId,
-          serviceIds: selectedServices,
+          kind: mode,
+          serviceIds: mode === "wash" ? selectedServices : [],
+          parkingRateType: mode === "parking" ? parkingRateType : null,
           slotId: slotId ?? null,
-          employeeId: employeeId ?? null,
+          employeeId: mode === "wash" ? employeeId ?? null : null,
           ownerName: ownerName.trim() || null,
           ownerPhone: ownerPhone.trim() || null,
         }),
@@ -121,7 +165,7 @@ export function IngresoForm({
     }
   };
 
-  const selectedSlot = freeSlots.find((s) => s.id === slotId);
+  const selectedSlot = availableSlots.find((s) => s.id === slotId);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 pb-8">
@@ -147,6 +191,39 @@ export function IngresoForm({
           aria-describedby={error ? "ingreso-error" : undefined}
         />
         <div className="mt-2 h-px bg-border/60 rounded-full" />
+      </section>
+
+      {/* ── Modalidad ──────────────────────────────────────────── */}
+      <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
+        <p id="ingreso-mode-label" className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
+          style={{ fontFamily: "var(--font-space-mono)" }}>
+          Modalidad
+        </p>
+        <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="ingreso-mode-label">
+          {([
+            { value: "wash", label: "Lavado", icon: "🧽" },
+            { value: "parking", label: "Parqueo", icon: "🅿️" },
+          ] as const).map((m) => {
+            const active = mode === m.value;
+            return (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => handleModeChange(m.value)}
+                aria-pressed={active}
+                className="flex items-center justify-center gap-2 min-h-[44px] py-3 rounded-xl font-semibold text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+                style={{
+                  background: active ? "var(--color-primary)" : "var(--color-muted)",
+                  color: active ? "#fff" : "var(--color-muted-foreground)",
+                  border: active ? "none" : "1px solid var(--color-border)",
+                }}
+              >
+                <span aria-hidden="true" className="text-lg">{m.icon}</span>
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       {/* ── Tipo de vehículo ────────────────────────────────── */}
@@ -179,8 +256,59 @@ export function IngresoForm({
         </div>
       </section>
 
-      {/* ── Servicios ──────────────────────────────────────── */}
-      {vehicleTypeId !== null && (
+      {/* ── Tarifa de parqueo (solo parqueo) ─────────────────── */}
+      {mode === "parking" && vehicleTypeId !== null && (
+        <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
+          <p id="ingreso-rate-label" className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
+            style={{ fontFamily: "var(--font-space-mono)" }}>
+            Cobro del parqueo
+          </p>
+          <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="ingreso-rate-label">
+            {([
+              { value: "hour", label: "Por hora" },
+              { value: "day", label: "Día completo" },
+            ] as const).map((rt) => {
+              const active = parkingRateType === rt.value;
+              const amount =
+                parkingRates.find(
+                  (r) => r.vehicleTypeId === vehicleTypeId && r.rateType === rt.value
+                )?.amount ?? 0;
+              return (
+                <button
+                  key={rt.value}
+                  type="button"
+                  onClick={() => setParkingRateType(rt.value)}
+                  aria-pressed={active}
+                  className="flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-2 rounded-xl font-semibold text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+                  style={{
+                    background: active ? "var(--color-primary)" : "var(--color-muted)",
+                    color: active ? "#fff" : "var(--color-muted-foreground)",
+                    border: active ? "none" : "1px solid var(--color-border)",
+                  }}
+                >
+                  {rt.label}
+                  <span className="text-[11px] font-bold" style={{ fontFamily: "var(--font-space-mono)" }}>
+                    {formatPrice(amount)}{rt.value === "hour" ? "/h" : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {parkingRate === 0 && (
+            <p className="mt-2 text-[11px] text-amber-600">
+              No hay tarifa configurada para este tipo de vehículo. Configúrala en Configuración → Tarifas.
+            </p>
+          )}
+          {parkingRateType === "hour" && (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              El total se calcula al registrar la salida (horas × tarifa).
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* ── Servicios (solo lavado) ──────────────────────────── */}
+      {mode === "wash" && vehicleTypeId !== null && (
         <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
           <p id="ingreso-services-label" className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3"
             style={{ fontFamily: "var(--font-space-mono)" }}>
@@ -251,9 +379,9 @@ export function IngresoForm({
           style={{ fontFamily: "var(--font-space-mono)" }}>
           Espacio asignado
         </p>
-        {freeSlots.length === 0 ? (
+        {availableSlots.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-2">
-            Sin espacios libres disponibles
+            {mode === "wash" ? "Sin bahías de lavado libres" : "Sin plazas de parqueo libres"}
           </p>
         ) : (
           <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ingreso-slot-label">
@@ -270,7 +398,7 @@ export function IngresoForm({
             >
               Sin espacio
             </button>
-            {freeSlots.map((s) => {
+            {availableSlots.map((s) => {
               const active = slotId === s.id;
               return (
                 <button
@@ -295,13 +423,13 @@ export function IngresoForm({
         )}
         {selectedSlot && (
           <p className="mt-2 text-xs text-muted-foreground">
-            Espacio {selectedSlot.kind === "wash" ? "de lavado" : "de parqueo"} seleccionado
+            Espacio {selectedSlot.kind === "wash" ? "de lavado" : selectedSlot.kind === "monthly" ? "de mensualidad" : "de parqueo"} seleccionado
           </p>
         )}
       </section>
 
-      {/* ── Empleado asignado ──────────────────────────────── */}
-      {workers.length > 0 && (
+      {/* ── Empleado asignado (solo lavado) ──────────────────── */}
+      {mode === "wash" && workers.length > 0 && (
         <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
           <p
             id="ingreso-employee-label"
@@ -411,7 +539,9 @@ export function IngresoForm({
           <p id="ingreso-error" role="alert" className="text-sm text-destructive font-medium mb-2 text-center">{error}</p>
         )}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm text-muted-foreground">Total</span>
+          <span className="text-sm text-muted-foreground">
+            {mode === "parking" && parkingRateType === "hour" ? "Tarifa" : "Total"}
+          </span>
           <span
             className="text-2xl font-extrabold"
             style={{
@@ -420,6 +550,9 @@ export function IngresoForm({
             }}
           >
             {formatPrice(total)}
+            {mode === "parking" && parkingRateType === "hour" && (
+              <span className="text-sm font-semibold text-muted-foreground">/h</span>
+            )}
           </span>
         </div>
         <button
@@ -432,7 +565,11 @@ export function IngresoForm({
             cursor: canSubmit ? "pointer" : "not-allowed",
           }}
         >
-          {loading ? "Creando orden..." : "Registrar ingreso"}
+          {loading
+            ? "Creando orden..."
+            : mode === "parking"
+              ? "Registrar parqueo"
+              : "Registrar lavado"}
         </button>
       </div>
     </form>

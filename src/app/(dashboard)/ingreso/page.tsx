@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getVehicleTypes, getAllActiveSlots } from "@/lib/services/catalog";
+import { getParkingRates } from "@/lib/services/config";
 import { db } from "@/lib/db/client";
 import { services, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -31,14 +32,20 @@ export default async function IngresoPage({ searchParams }: Props) {
   const params = await searchParams;
   const preselectedSlot = params.slot;
 
-  const [vehicleTypes, allServices, allSlots, workers] = await Promise.all([
+  const [vehicleTypes, allServices, allSlots, workers, rates] = await Promise.all([
     getVehicleTypes(),
     getAllServices(),
     getAllActiveSlots(),
     getActiveWorkers(),
+    getParkingRates(),
   ]);
 
   const freeSlots = allSlots.filter((s) => s.status === "free");
+  const parkingRates = rates.map((r) => ({
+    vehicleTypeId: r.vehicleTypeId,
+    rateType: r.rateType,
+    amount: r.amount,
+  }));
 
   return (
     <div className="flex flex-col min-h-full">
@@ -89,6 +96,7 @@ export default async function IngresoPage({ searchParams }: Props) {
           services={allServices}
           freeSlots={freeSlots}
           workers={workers}
+          parkingRates={parkingRates}
           preselectedSlotLabel={preselectedSlot}
         />
       </section>

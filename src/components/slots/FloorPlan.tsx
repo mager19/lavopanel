@@ -181,6 +181,7 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
 
   const parking = allSlots.filter((s) => s.kind === "parking");
   const wash    = allSlots.filter((s) => s.kind === "wash");
+  const monthly = allSlots.filter((s) => s.kind === "monthly");
 
   const occupiedCount = allSlots.filter((s) => s.status !== "free").length;
   const planSummary = `Plano del establecimiento: ${occupiedCount} de ${allSlots.length} espacios ocupados. La lista accesible de espacios está disponible debajo.`;
@@ -213,6 +214,7 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
   for (const [list, label, slotH] of [
     [parking, "PARQUEO", P_H],
     [wash, "LAVADO", B_H],
+    [monthly, "MENSUALIDAD", P_H],
   ] as const) {
     if (list.length === 0) continue;
     cursorY += LBL;
@@ -266,7 +268,8 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
         <ul>
           {allSlots.map((slot) => {
             const statusLabel = (STATUS[slot.status] ?? STATUS.free).label.toLowerCase();
-            const kindLabel = slot.kind === "wash" ? "lavado" : "parqueo";
+            const kindLabel =
+              slot.kind === "wash" ? "lavado" : slot.kind === "monthly" ? "mensualidad" : "parqueo";
             if (slot.status === "free") {
               return (
                 <li key={slot.id}>

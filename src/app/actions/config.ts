@@ -19,7 +19,7 @@ const roleSchema = z.enum(["admin", "owner", "worker"]);
 
 const createSlotSchema = z.object({
   label: z.string().trim().min(1, "El nombre es obligatorio").max(40, "El nombre no puede superar los 40 caracteres"),
-  kind: z.enum(["parking", "wash"]),
+  kind: z.enum(["parking", "wash", "monthly"]),
 });
 
 const toggleSchema = z.object({

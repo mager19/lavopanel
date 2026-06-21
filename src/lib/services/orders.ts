@@ -8,6 +8,7 @@ import {
   users,
   slots,
   shifts,
+  parkingRates,
 } from "@/lib/db/schema";
 import { eq, and, gte, ne, isNull, sql } from "drizzle-orm";
 import { upsertVehicle } from "./vehicles";
@@ -192,6 +193,43 @@ export async function advanceOrderStatus(
 }
 
 /**
+ * Registra la salida de un parqueo: calcula el cobro (por hora → horas
+ * redondeadas hacia arriba × tarifa; por día → monto fijo ya seteado),
+ * marca la orden como entregada y libera el espacio.
+ */
+export async function exitParkingOrder(id: number) {
+  const [order] = await db
+    .select()
+    .from(serviceOrders)
+    .where(eq(serviceOrders.id, id))
+    .limit(1);
+
+  if (!order) throw new Error("Orden no encontrada");
+  if (order.kind !== "parking") throw new Error("La orden no es un parqueo");
+  if (order.status === "delivered") throw new Error("El parqueo ya fue cerrado");
+
+  const now = new Date();
+  let total = order.total;
+
+  if (order.parkingRateType === "hour") {
+    const ms = now.getTime() - new Date(order.createdAt).getTime();
+    const hours = Math.max(1, Math.ceil(ms / (1000 * 60 * 60)));
+    total = hours * (order.parkingRate ?? 0);
+  }
+
+  await db
+    .update(serviceOrders)
+    .set({ status: "delivered", deliveredAt: now, finishedAt: now, total })
+    .where(eq(serviceOrders.id, id));
+
+  if (order.slotId) {
+    await db.update(slots).set({ status: "free" }).where(eq(slots.id, order.slotId));
+  }
+
+  return getOrderById(id);
+}
+
+/**
  * Creates a new service order, upserting the vehicle and updating the slot.
  */
 export async function createOrder({
@@ -203,6 +241,8 @@ export async function createOrder({
   ownerPhone,
   userId,
   employeeId,
+  kind = "wash",
+  parkingRateType,
 }: {
   plate: string;
   vehicleTypeId: number;
@@ -212,6 +252,8 @@ export async function createOrder({
   ownerPhone?: string | null;
   userId?: number | null;
   employeeId?: number | null;
+  kind?: "wash" | "parking";
+  parkingRateType?: "hour" | "day" | null;
 }) {
   // Todo el ingreso (vehículo + orden + items + ocupar slot) corre en una
   // transacción: si algo falla a mitad, no quedan datos huérfanos.
@@ -238,6 +280,48 @@ export async function createOrder({
       tx
     );
 
+    // ── Parqueo ──────────────────────────────────────────────────
+    if (kind === "parking") {
+      const rateType = parkingRateType ?? "hour";
+      // Tarifa snapshot del tipo de vehículo (por hora o por día).
+      const rateRow = await tx
+        .select({ amount: parkingRates.amount })
+        .from(parkingRates)
+        .where(
+          and(
+            eq(parkingRates.vehicleTypeId, vehicleTypeId),
+            eq(parkingRates.rateType, rateType)
+          )
+        )
+        .get();
+      const rate = rateRow?.amount ?? 0;
+      // Día: se cobra el monto fijo al ingresar. Hora: se cobra a la salida
+      // (total arranca en 0 y se calcula al registrar la salida).
+      const total = rateType === "day" ? rate : 0;
+
+      const [order] = await tx
+        .insert(serviceOrders)
+        .values({
+          vehicleId: vehicle.id,
+          slotId: slotId ?? null,
+          employeeId: employeeId ?? userId ?? null,
+          shiftId,
+          kind: "parking",
+          parkingRateType: rateType,
+          parkingRate: rate,
+          status: "received",
+          total,
+        })
+        .returning();
+
+      if (slotId) {
+        await tx.update(slots).set({ status: "occupied" }).where(eq(slots.id, slotId));
+      }
+
+      return order;
+    }
+
+    // ── Lavado ───────────────────────────────────────────────────
     // Get service prices
     const selectedServices =
       serviceIds.length > 0
@@ -262,6 +346,7 @@ export async function createOrder({
         slotId: slotId ?? null,
         employeeId: employeeId ?? userId ?? null,
         shiftId,
+        kind: "wash",
         status: "received",
         total,
       })

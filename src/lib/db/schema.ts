@@ -67,7 +67,7 @@ export const parkingRates = sqliteTable(
 export const slots = sqliteTable("slots", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   label: text("label").notNull(),
-  kind: text("kind", { enum: ["parking", "wash"] }).notNull(),
+  kind: text("kind", { enum: ["parking", "wash", "monthly"] }).notNull(),
   status: text("status", { enum: ["free", "occupied", "in_progress"] })
     .notNull()
     .default("free"),
@@ -97,6 +97,13 @@ export const serviceOrders = sqliteTable("service_orders", {
   slotId: integer("slot_id").references(() => slots.id),
   employeeId: integer("employee_id").references(() => users.id),
   shiftId: integer("shift_id").references(() => shifts.id),
+  // Modalidad del ingreso: "wash" (lavado, con servicios) o "parking" (parqueo,
+  // cobrado por tiempo a la salida).
+  kind: text("kind", { enum: ["wash", "parking"] }).notNull().default("wash"),
+  // Solo para parqueo: si se cobra por hora o tarifa plana de día.
+  parkingRateType: text("parking_rate_type", { enum: ["hour", "day"] }),
+  // Solo para parqueo: snapshot de la tarifa (por hora o por día) al ingresar.
+  parkingRate: integer("parking_rate"),
   status: text("status", {
     enum: ["received", "in_progress", "ready", "delivered"],
   })

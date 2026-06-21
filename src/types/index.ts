@@ -1,5 +1,5 @@
 export type UserRole = "admin" | "owner" | "worker";
-export type SlotKind = "parking" | "wash";
+export type SlotKind = "parking" | "wash" | "monthly";
 // Estado PERSISTIDO en la DB (enum de la columna slots.status).
 export type SlotStatus = "free" | "occupied" | "in_progress";
 export type SlotDbStatus = SlotStatus;
@@ -26,6 +26,7 @@ export const ORDER_STATUS_NEXT: Partial<Record<OrderStatus, OrderStatus>> = {
 export const SLOT_KIND_LABELS: Record<SlotKind, string> = {
   parking: "Parqueo",
   wash: "Lavado",
+  monthly: "Mensualidad",
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {

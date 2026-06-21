@@ -16,7 +16,7 @@ export async function getAllSlots() {
 
 export async function createSlot(data: {
   label: string;
-  kind: "parking" | "wash";
+  kind: "parking" | "wash" | "monthly";
   position?: number;
 }) {
   const [created] = await db

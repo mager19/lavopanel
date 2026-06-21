@@ -3,15 +3,29 @@ import { auth } from "@/lib/auth";
 import { createOrder } from "@/lib/services/orders";
 import { z } from "zod";
 
-const schema = z.object({
-  plate: z.string().min(3).max(12),
-  vehicleTypeId: z.number().int().positive(),
-  serviceIds: z.array(z.number().int().positive()).min(1),
-  slotId: z.number().int().positive().nullable().optional(),
-  ownerName: z.string().max(120).nullable().optional(),
-  ownerPhone: z.string().max(30).nullable().optional(),
-  employeeId: z.number().int().positive().nullable().optional(),
-});
+const schema = z
+  .object({
+    plate: z.string().min(3).max(12),
+    vehicleTypeId: z.number().int().positive(),
+    serviceIds: z.array(z.number().int().positive()).default([]),
+    slotId: z.number().int().positive().nullable().optional(),
+    ownerName: z.string().max(120).nullable().optional(),
+    ownerPhone: z.string().max(30).nullable().optional(),
+    employeeId: z.number().int().positive().nullable().optional(),
+    kind: z.enum(["wash", "parking"]).default("wash"),
+    parkingRateType: z.enum(["hour", "day"]).nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.kind === "parking") {
+      // El parqueo exige elegir cómo se cobra (hora o día) y no lleva servicios.
+      if (!data.parkingRateType) {
+        ctx.addIssue({ code: "custom", message: "Falta el tipo de tarifa del parqueo", path: ["parkingRateType"] });
+      }
+    } else if (data.serviceIds.length < 1) {
+      // El lavado exige al menos un servicio.
+      ctx.addIssue({ code: "custom", message: "Selecciona al menos un servicio", path: ["serviceIds"] });
+    }
+  });
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -41,6 +55,7 @@ export async function POST(req: Request) {
       ...parsed.data,
       userId,
       employeeId: parsed.data.employeeId ?? null,
+      parkingRateType: parsed.data.parkingRateType ?? null,
     });
     return NextResponse.json({ orderId: order.id }, { status: 201 });
   } catch (err) {

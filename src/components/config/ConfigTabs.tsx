@@ -79,11 +79,18 @@ const formatCOP = (amount: number) =>
 
 // ─── Sub-components ───────────────────────────────────────────
 
-function SlotBadge({ kind }: { kind: "parking" | "wash" }) {
+function SlotBadge({ kind }: { kind: "parking" | "wash" | "monthly" }) {
   if (kind === "parking") {
     return (
       <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-medium">
         Parqueo
+      </span>
+    );
+  }
+  if (kind === "monthly") {
+    return (
+      <span className="bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 text-xs font-medium">
+        Mensualidad
       </span>
     );
   }
@@ -99,7 +106,7 @@ function SlotBadge({ kind }: { kind: "parking" | "wash" }) {
 function PlazasTab({ slots }: { slots: Slot[] }) {
   const [showForm, setShowForm] = useState(false);
   const [label, setLabel] = useState("");
-  const [kind, setKind] = useState<"parking" | "wash">("parking");
+  const [kind, setKind] = useState<"parking" | "wash" | "monthly">("parking");
   const [isPending, startTransition] = useTransition();
 
   const [error, setError] = useState("");
@@ -166,11 +173,12 @@ function PlazasTab({ slots }: { slots: Slot[] }) {
             <select
               aria-label="Tipo de plaza"
               value={kind}
-              onChange={(e) => setKind(e.target.value as "parking" | "wash")}
+              onChange={(e) => setKind(e.target.value as "parking" | "wash" | "monthly")}
               className="h-10 rounded-xl border border-input bg-transparent px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
             >
               <option value="parking">Parqueo</option>
               <option value="wash">Lavado</option>
+              <option value="monthly">Mensualidad</option>
             </select>
           </div>
           <Button
