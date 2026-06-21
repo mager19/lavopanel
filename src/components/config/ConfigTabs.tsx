@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import {
 import {
   createSlotAction,
   toggleSlotAction,
+  deleteSlotAction,
   updateParkingRateAction,
   createServiceAction,
   toggleServiceAction,
@@ -100,9 +102,23 @@ function PlazasTab({ slots }: { slots: Slot[] }) {
   const [kind, setKind] = useState<"parking" | "wash">("parking");
   const [isPending, startTransition] = useTransition();
 
+  const [error, setError] = useState("");
+
   const handleToggle = (id: number, checked: boolean) => {
     startTransition(async () => {
       await toggleSlotAction(id, checked);
+    });
+  };
+
+  const handleDelete = (slot: Slot) => {
+    if (!confirm(`¿Eliminar el espacio ${slot.label}?`)) return;
+    setError("");
+    startTransition(async () => {
+      try {
+        await deleteSlotAction(slot.id);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "No se pudo eliminar el espacio");
+      }
     });
   };
 
@@ -167,6 +183,12 @@ function PlazasTab({ slots }: { slots: Slot[] }) {
         </div>
       )}
 
+      {error && (
+        <p role="alert" className="text-xs text-destructive font-medium">
+          {error}
+        </p>
+      )}
+
       <div className="space-y-2">
         {slots.map((slot) => (
           <div
@@ -179,14 +201,25 @@ function PlazasTab({ slots }: { slots: Slot[] }) {
               </span>
               <SlotBadge kind={slot.kind} />
             </div>
-            <Switch
-              aria-label={`Activar plaza ${slot.label}`}
-              checked={slot.active ?? true}
-              onCheckedChange={(checked: boolean) =>
-                handleToggle(slot.id, checked)
-              }
-              disabled={isPending}
-            />
+            <div className="flex items-center gap-2">
+              <Switch
+                aria-label={`Activar plaza ${slot.label}`}
+                checked={slot.active ?? true}
+                onCheckedChange={(checked: boolean) =>
+                  handleToggle(slot.id, checked)
+                }
+                disabled={isPending}
+              />
+              <button
+                type="button"
+                onClick={() => handleDelete(slot)}
+                disabled={isPending}
+                aria-label={`Eliminar plaza ${slot.label}`}
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors focus-visible:ring-2 focus-visible:ring-destructive disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </div>
           </div>
         ))}
         {slots.length === 0 && (
@@ -659,7 +692,6 @@ function EmpleadosTab({ employees }: { employees: EmployeeRow[] }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="worker">Trabajador</SelectItem>
-                  <SelectItem value="owner">Dueño</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -688,30 +720,36 @@ function EmpleadosTab({ employees }: { employees: EmployeeRow[] }) {
               <p className="text-xs text-muted-foreground truncate">{emp.email}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Select
-                defaultValue={emp.role}
-                onValueChange={(val) =>
-                  startTransition(() =>
-                    updateEmployeeRoleAction(emp.id, val as "admin" | "owner" | "worker")
-                  )
-                }
-              >
-                <SelectTrigger aria-label={`Rol de ${emp.name}`} className="h-8 w-28 rounded-lg text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="worker">Trabajador</SelectItem>
-                  <SelectItem value="owner">Dueño</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-              <Switch
-                aria-label={`Activar usuario ${emp.name}`}
-                checked={emp.active ?? true}
-                onCheckedChange={(val) =>
-                  startTransition(() => toggleEmployeeAction(emp.id, val))
-                }
-              />
+              {emp.role === "owner" ? (
+                // El dueño es único y de sistema: no se puede cambiar de rol ni desactivar.
+                <span className="text-[10px] text-muted-foreground italic">Super admin</span>
+              ) : (
+                <>
+                  <Select
+                    defaultValue={emp.role}
+                    onValueChange={(val) =>
+                      startTransition(() =>
+                        updateEmployeeRoleAction(emp.id, val as "admin" | "owner" | "worker")
+                      )
+                    }
+                  >
+                    <SelectTrigger aria-label={`Rol de ${emp.name}`} className="h-8 w-28 rounded-lg text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="worker">Trabajador</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Switch
+                    aria-label={`Activar usuario ${emp.name}`}
+                    checked={emp.active ?? true}
+                    onCheckedChange={(val) =>
+                      startTransition(() => toggleEmployeeAction(emp.id, val))
+                    }
+                  />
+                </>
+              )}
             </div>
           </div>
         ))}

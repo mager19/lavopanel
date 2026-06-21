@@ -6,6 +6,7 @@ import { getSlots } from "@/lib/services/slots";
 import { getOpenShift } from "@/lib/services/shifts";
 import type { SlotDisplayStatus, SlotKind } from "@/types";
 import { Car, CheckCheck, Banknote, Clock, ChevronRight, Zap } from "lucide-react";
+import { LogoutButton } from "@/components/layout/LogoutButton";
 
 function formatRevenue(amount: number): string {
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
@@ -99,12 +100,18 @@ export default async function DashboardPage() {
               Lavadero la 55
             </span>
           </div>
-          <span
-            className="text-[11px] text-muted-foreground"
-            style={{ fontFamily: "var(--font-space-mono)" }}
-          >
-            {getDateLabel()}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="text-[11px] text-muted-foreground"
+              style={{ fontFamily: "var(--font-space-mono)" }}
+            >
+              {getDateLabel()}
+            </span>
+            {/* Logout accesible en móvil (en desktop está en el sidebar) */}
+            <span className="md:hidden">
+              <LogoutButton variant="icon" />
+            </span>
+          </div>
         </div>
 
         {/* Greeting */}

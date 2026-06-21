@@ -13,6 +13,7 @@ import {
   Droplets,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoutButton } from "./LogoutButton";
 
 const NAV_ITEMS = [
   { href: "/", icon: LayoutGrid, label: "Dashboard" },
@@ -24,7 +25,7 @@ const NAV_ITEMS = [
   { href: "/configuracion", icon: Settings2, label: "Configuración" },
 ];
 
-export function Sidebar() {
+export function Sidebar({ userName }: { userName?: string | null }) {
   const pathname = usePathname();
 
   return (
@@ -59,6 +60,15 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="border-t border-border p-3">
+        {userName && (
+          <p className="px-3 pb-2 text-xs text-muted-foreground truncate">
+            {userName}
+          </p>
+        )}
+        <LogoutButton />
+      </div>
     </aside>
   );
 }

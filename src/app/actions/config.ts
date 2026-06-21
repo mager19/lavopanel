@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
-import { createSlot, updateSlot } from "@/lib/services/slots";
+import { createSlot, updateSlot, deleteSlot } from "@/lib/services/slots";
 import { upsertParkingRate } from "@/lib/services/config";
 import { createService, updateService } from "@/lib/services/services-catalog";
 import { setBusinessConfig } from "@/lib/services/config";
@@ -25,6 +25,10 @@ const createSlotSchema = z.object({
 const toggleSchema = z.object({
   id: z.number().int().positive("ID inválido"),
   active: z.boolean(),
+});
+
+const idSchema = z.object({
+  id: z.number().int().positive("ID inválido"),
 });
 
 const updateParkingRateSchema = z.object({
@@ -76,11 +80,28 @@ async function requireAdmin() {
   return session;
 }
 
-// Solo un admin puede crear o asignar el rol "admin"; un owner no puede escalar privilegios.
+// Jerarquía de roles:
+// - "owner" (dueño) es el super admin ÚNICO y de sistema: NUNCA se asigna desde
+//   la UI, solo existe vía seed. Esto garantiza un único dueño.
+// - Solo el dueño puede crear/gestionar administradores.
+// - El dueño no puede ser degradado ni desactivado desde la UI.
 function assertCanAssignRole(actorRole: string, targetRole: string) {
-  if (targetRole === "admin" && actorRole !== "admin") {
-    throw new Error("Solo un admin puede crear o asignar el rol admin");
+  if (targetRole === "owner") {
+    throw new Error("El rol dueño es único y no puede asignarse");
   }
+  if (targetRole === "admin" && actorRole !== "owner") {
+    throw new Error("Solo el dueño puede gestionar administradores");
+  }
+}
+
+// Devuelve el rol actual de un usuario (o null si no existe).
+async function getUserRole(id: number): Promise<string | null> {
+  const u = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, id))
+    .get();
+  return u?.role ?? null;
 }
 
 // ── Slots ──────────────────────────────────────────────────────
@@ -99,6 +120,13 @@ export async function toggleSlotAction(id: number, active: boolean) {
   await requireAdmin();
   validate(toggleSchema, { id, active });
   await updateSlot(id, { active });
+  revalidatePath("/configuracion");
+}
+
+export async function deleteSlotAction(id: number) {
+  await requireAdmin();
+  const { id: slotId } = validate(idSchema, { id });
+  await deleteSlot(slotId);
   revalidatePath("/configuracion");
 }
 
@@ -157,8 +185,18 @@ export async function createEmployeeAction(formData: FormData) {
 }
 
 export async function toggleEmployeeAction(id: number, active: boolean) {
-  await requireAdmin();
+  const session = await requireAdmin();
   validate(toggleSchema, { id, active });
+
+  const targetRole = await getUserRole(id);
+  if (targetRole === "owner" && active === false) {
+    throw new Error("No se puede desactivar al dueño");
+  }
+  // Solo el dueño puede activar/desactivar administradores.
+  if (targetRole === "admin" && (session.user.role as string) !== "owner") {
+    throw new Error("Solo el dueño puede gestionar administradores");
+  }
+
   await db.update(users).set({ active }).where(eq(users.id, id));
   revalidatePath("/configuracion");
 }
@@ -166,6 +204,13 @@ export async function toggleEmployeeAction(id: number, active: boolean) {
 export async function updateEmployeeRoleAction(id: number, role: "admin" | "owner" | "worker") {
   const session = await requireAdmin();
   const v = validate(updateEmployeeRoleSchema, { id, role });
+
+  // No se puede cambiar el rol del dueño (es único y de sistema).
+  const targetRole = await getUserRole(v.id);
+  if (targetRole === "owner") {
+    throw new Error("No se puede cambiar el rol del dueño");
+  }
+
   assertCanAssignRole(session.user.role as string, v.role);
   await db.update(users).set({ role: v.role }).where(eq(users.id, v.id));
   revalidatePath("/configuracion");
