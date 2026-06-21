@@ -381,7 +381,9 @@ export function IngresoForm({
         </p>
         {availableSlots.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-2">
-            {mode === "wash" ? "Sin bahías de lavado libres" : "Sin plazas de parqueo libres"}
+            {mode === "wash" ? "Sin bahías de lavado libres" : "Sin plazas de parqueo libres"}.
+            <br />
+            <span className="text-xs">Quedará <b>en espera</b>; le asignás un espacio cuando se libere uno.</span>
           </p>
         ) : (
           <div className="flex flex-wrap gap-2" role="group" aria-labelledby="ingreso-slot-label">

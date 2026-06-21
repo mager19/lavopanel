@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { FloorPlan } from "@/components/slots/FloorPlan";
-import { getTodayKPIs } from "@/lib/services/orders";
+import { WaitingQueue } from "@/components/slots/WaitingQueue";
+import { getTodayKPIs, getWaitingOrders } from "@/lib/services/orders";
 import { getSlots } from "@/lib/services/slots";
 import { getOpenShift } from "@/lib/services/shifts";
 import type { SlotDisplayStatus, SlotKind } from "@/types";
@@ -21,7 +22,7 @@ function getDateLabel(): string {
   return `${week[d.getDay()]} ${d.getDate()} ${month[d.getMonth()]}`;
 }
 
-async function getInitialSlots() {
+async function getSlotsData() {
   try {
     const data = await getSlots();
     return {
@@ -34,18 +35,25 @@ async function getInitialSlots() {
         status:   s.status satisfies SlotDisplayStatus,
         position: s.position,
       })),
+      freeSlots: data
+        .filter((s) => s.status === "free")
+        .map((s) => ({ id: s.id, label: s.label, kind: s.kind })),
     };
   } catch {
-    return undefined;
+    return { slots: [], freeSlots: [] };
   }
 }
 
 export default async function DashboardPage() {
-  const [session, kpis, initialSlots] = await Promise.all([
+  const [session, kpis, slotsData, waiting] = await Promise.all([
     auth(),
     getTodayKPIs(),
-    getInitialSlots(),
+    getSlotsData(),
+    getWaitingOrders().catch(() => []),
   ]);
+
+  const initialSlots = { slots: slotsData.slots };
+  const freeSlots = slotsData.freeSlots;
 
   const userId = Number((session?.user as { id?: string | number })?.id ?? 0);
   const openShift = userId ? await getOpenShift(userId) : null;
@@ -206,6 +214,7 @@ export default async function DashboardPage() {
             en vivo
           </span>
         </div>
+        <WaitingQueue orders={waiting} freeSlots={freeSlots} />
         <FloorPlan initialData={initialSlots} />
       </section>
 

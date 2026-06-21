@@ -193,6 +193,66 @@ export async function advanceOrderStatus(
 }
 
 /**
+ * Órdenes EN ESPERA: activas (no entregadas) y sin espacio asignado. Es la cola
+ * para cuando se ingresa con todo ocupado.
+ */
+export async function getWaitingOrders() {
+  const rows = await db
+    .select({
+      id: serviceOrders.id,
+      kind: serviceOrders.kind,
+      status: serviceOrders.status,
+      createdAt: serviceOrders.createdAt,
+      plate: vehicles.plate,
+      vehicleType: vehicleTypes.name,
+    })
+    .from(serviceOrders)
+    .leftJoin(vehicles, eq(serviceOrders.vehicleId, vehicles.id))
+    .leftJoin(vehicleTypes, eq(vehicles.vehicleTypeId, vehicleTypes.id))
+    .where(and(ne(serviceOrders.status, "delivered"), isNull(serviceOrders.slotId)))
+    .orderBy(serviceOrders.createdAt);
+  return rows;
+}
+
+/**
+ * Asigna manualmente un espacio libre a una orden en espera y lo ocupa.
+ * Valida que el espacio esté libre y que el tipo coincida con la modalidad.
+ */
+export async function assignSlotToOrder(orderId: number, slotId: number) {
+  return db.transaction(async (tx) => {
+    const [order] = await tx
+      .select()
+      .from(serviceOrders)
+      .where(eq(serviceOrders.id, orderId))
+      .limit(1);
+    if (!order) throw new Error("Orden no encontrada");
+    if (order.status === "delivered") throw new Error("La orden ya fue entregada");
+    if (order.slotId) throw new Error("La orden ya tiene un espacio asignado");
+
+    const [slot] = await tx.select().from(slots).where(eq(slots.id, slotId)).limit(1);
+    if (!slot || !slot.active) throw new Error("Espacio inválido");
+    if (slot.status !== "free") throw new Error("El espacio ya está ocupado");
+
+    // El tipo de espacio debe coincidir con la modalidad de la orden.
+    const okKind =
+      order.kind === "wash" ? slot.kind === "wash" : slot.kind === "parking" || slot.kind === "monthly";
+    if (!okKind) {
+      throw new Error(
+        order.kind === "wash"
+          ? "Asigná una bahía de lavado"
+          : "Asigná una plaza de parqueo"
+      );
+    }
+
+    await tx.update(serviceOrders).set({ slotId }).where(eq(serviceOrders.id, orderId));
+    await tx
+      .update(slots)
+      .set({ status: order.status === "in_progress" ? "in_progress" : "occupied" })
+      .where(eq(slots.id, slotId));
+  });
+}
+
+/**
  * Registra la salida de un parqueo: calcula el cobro (por hora → horas
  * redondeadas hacia arriba × tarifa; por día → monto fijo ya seteado),
  * marca la orden como entregada y libera el espacio.
