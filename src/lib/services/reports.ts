@@ -10,24 +10,51 @@ export interface ReportData {
     avgRevenue: number;
   };
   byDay: { date: string; orders: number; revenue: number }[];
+  byHour: { hour: string; orders: number; revenue: number }[];
   byService: { name: string; count: number; revenue: number }[];
   byEmployee: { name: string; orders: number; revenue: number }[];
 }
 
-export async function getReportData(from: Date, to: Date): Promise<ReportData> {
-  const fromDate = new Date(from);
-  fromDate.setHours(0, 0, 0, 0);
-  const toDate = new Date(to);
-  toDate.setHours(23, 59, 59, 999);
+// Colombia (America/Bogota) es UTC-5 sin horario de verano. Ajustamos las
+// fechas almacenadas en UTC para que la franja horaria sea la hora local.
+const TZ_OFFSET = "-5 hours";
 
-  const [summary, byDay, byService, byEmployee] = await Promise.all([
+export async function getReportData(from: Date, to: Date): Promise<ReportData> {
+  // from/to ya vienen como instantes exactos (el caller arma el rango con la
+  // franja horaria elegida y el huso de Colombia). Se usan tal cual.
+  const fromDate = from;
+  const toDate = to;
+
+  const [summary, byDay, byHour, byService, byEmployee] = await Promise.all([
     getSummary(fromDate, toDate),
     getByDay(fromDate, toDate),
+    getByHour(fromDate, toDate),
     getByService(fromDate, toDate),
     getByEmployee(fromDate, toDate),
   ]);
 
-  return { summary, byDay, byService, byEmployee };
+  return { summary, byDay, byHour, byService, byEmployee };
+}
+
+// Consolidado por FRANJA HORARIA (hora local de Colombia). Útil para detectar
+// descuadres: ver en qué franja se concentraron órdenes/ingresos.
+async function getByHour(from: Date, to: Date) {
+  const rows = await db
+    .select({
+      hour: sql<string>`strftime('%H', ${serviceOrders.createdAt}, 'unixepoch', ${TZ_OFFSET})`,
+      orders: sql<number>`count(*)`,
+      revenue: sql<number>`coalesce(sum(${serviceOrders.total}), 0)`,
+    })
+    .from(serviceOrders)
+    .where(and(gte(serviceOrders.createdAt, from), lte(serviceOrders.createdAt, to)))
+    .groupBy(sql`strftime('%H', ${serviceOrders.createdAt}, 'unixepoch', ${TZ_OFFSET})`)
+    .orderBy(sql`strftime('%H', ${serviceOrders.createdAt}, 'unixepoch', ${TZ_OFFSET})`);
+
+  return rows.map((r) => ({
+    hour: `${r.hour}:00`,
+    orders: Number(r.orders),
+    revenue: Number(r.revenue),
+  }));
 }
 
 async function getSummary(from: Date, to: Date) {

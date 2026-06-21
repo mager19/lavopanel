@@ -29,12 +29,18 @@ interface Props {
 }
 
 export function ReportsCharts({ data }: Props) {
-  const { byDay, byService, byEmployee } = data;
+  const { byDay, byHour, byService, byEmployee } = data;
 
   const dayData = byDay.map((d) => ({
     date: formatDate(d.date),
     Ingresos: d.revenue,
     Órdenes: d.orders,
+  }));
+
+  const hourData = byHour.map((h) => ({
+    hour: h.hour,
+    Ingresos: h.revenue,
+    Órdenes: h.orders,
   }));
 
   return (
@@ -65,6 +71,34 @@ export function ReportsCharts({ data }: Props) {
           <p className="text-sm text-muted-foreground text-center py-8">
             Sin datos de ingresos para el período seleccionado.
           </p>
+        </section>
+      )}
+
+      {/* Revenue by hour — para detectar descuadres por franja */}
+      {hourData.length > 0 && (
+        <section className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
+          <p
+            className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1"
+            style={{ fontFamily: "var(--font-space-mono)" }}
+          >
+            Ingresos por franja horaria
+          </p>
+          <p className="text-[11px] text-muted-foreground mb-4">
+            Hora local. Útil para revisar qué pasó en una franja con descuadre.
+          </p>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={hourData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={42} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCOP(v)} />
+              <Tooltip
+                formatter={(value, name) =>
+                  name === "Ingresos" ? formatCOP(Number(value)) : `${Number(value)} órd.`
+                }
+                labelStyle={{ fontWeight: "bold" }}
+              />
+              <Bar dataKey="Ingresos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </section>
       )}
 

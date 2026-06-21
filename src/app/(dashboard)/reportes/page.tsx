@@ -22,7 +22,7 @@ function daysAgoStr(n: number) {
 }
 
 interface Props {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; fromHour?: string; toHour?: string }>;
 }
 
 export default async function ReportesPage({ searchParams }: Props) {
@@ -47,16 +47,30 @@ export default async function ReportesPage({ searchParams }: Props) {
   const from = params.from ?? daysAgoStr(30);
   const to = params.to ?? todayStr();
 
-  const fromDate = new Date(from + "T00:00:00");
-  const toDate = new Date(to + "T23:59:59");
+  // Franja horaria (hora local de Colombia). Por defecto: todo el día.
+  const clampHour = (h: string | undefined, def: number) => {
+    const n = Number(h);
+    return Number.isInteger(n) && n >= 0 && n <= 23 ? n : def;
+  };
+  const fromHour = clampHour(params.fromHour, 0);
+  const toHour = clampHour(params.toHour, 23);
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  // -05:00 fija el huso de Colombia, así el rango es correcto sin importar el
+  // huso del servidor.
+  const fromDate = new Date(`${from}T${pad(fromHour)}:00:00-05:00`);
+  const toDate = new Date(`${to}T${pad(toHour)}:59:59-05:00`);
   const data = await getReportData(fromDate, toDate);
+
+  const hourLabel =
+    fromHour === 0 && toHour === 23 ? "" : ` · ${pad(fromHour)}:00–${pad(toHour)}:59`;
 
   return (
     <div className="flex flex-col min-h-full">
 
       <PageHeader
         title="Reportes"
-        subtitle={`${from} → ${to}`}
+        subtitle={`${from} → ${to}${hourLabel}`}
         icon={BarChart3}
         iconColor="#3b82f6"
         iconBg="#eff6ff"
@@ -67,7 +81,7 @@ export default async function ReportesPage({ searchParams }: Props) {
 
         {/* Date filter */}
         <Suspense>
-          <DateFilter from={from} to={to} />
+          <DateFilter from={from} to={to} fromHour={fromHour} toHour={toHour} />
         </Suspense>
 
         {/* KPI summary */}
