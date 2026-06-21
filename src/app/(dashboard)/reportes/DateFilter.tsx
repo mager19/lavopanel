@@ -72,7 +72,7 @@ export function DateFilter({ from, to }: Props) {
         <button
           onClick={apply}
           className="h-9 px-4 rounded-xl text-sm font-semibold text-white"
-          style={{ background: "#F97316" }}
+          style={{ background: "var(--color-primary)" }}
         >
           Aplicar
         </button>

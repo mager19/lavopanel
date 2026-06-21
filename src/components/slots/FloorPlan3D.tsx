@@ -4,11 +4,9 @@ import { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
 import * as THREE from "three";
+import { useSlots } from "@/lib/hooks/useSlots";
 import type { SlotData } from "./SlotCard";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 // ── Paleta de estados ────────────────────────────────────────────
 const STATUS = {
@@ -27,24 +25,27 @@ const SPACING = 2.35;
 
 // ── Cámara adaptiva según ancho de pantalla ──────────────────────
 function CameraAdaptive() {
-  const { camera, size } = useThree();
+  const get = useThree((state) => state.get);
+  const width = useThree((state) => state.size.width);
 
   useEffect(() => {
-    const cam = camera as THREE.PerspectiveCamera;
-    const isMobile = size.width < 640;
+    // Leemos la cámara fresca del store de R3F dentro del efecto en vez de
+    // mutar un objeto capturado por el hook (evita react-hooks/immutability).
+    const cam = get().camera as THREE.PerspectiveCamera;
+    const isMobile = width < 640;
     if (isMobile) {
       cam.fov = 58;
-      camera.position.set(0, 12, 9);
+      cam.position.set(0, 12, 9);
     } else {
       cam.fov = 35;
-      camera.position.set(0, 22, 2.5);
+      cam.position.set(0, 22, 2.5);
     }
-    camera.lookAt(0, 0, 0);
-    camera.updateProjectionMatrix();
-  }, [camera, size.width]);
+    cam.lookAt(0, 0, 0);
+    cam.updateProjectionMatrix();
+  }, [get, width]);
 
-  useFrame(() => {
-    camera.lookAt(0, 0, 0);
+  useFrame((state) => {
+    state.camera.lookAt(0, 0, 0);
   });
 
   return null;
@@ -382,9 +383,9 @@ function Scene({ slots }: { slots: SlotData[] }) {
 }
 
 // ── Leyenda ──────────────────────────────────────────────────────
-function Legend() {
+function Legend({ hasError }: { hasError?: boolean }) {
   return (
-    <div className="px-4 py-3 border-t border-border/40 bg-muted/20 flex flex-wrap gap-x-4 gap-y-1">
+    <div className="px-4 py-3 border-t border-border/40 bg-muted/20 flex flex-wrap items-center gap-x-4 gap-y-1">
       {(Object.entries(STATUS) as [StatusKey, (typeof STATUS)[StatusKey]][]).map(
         ([, cfg]) => (
           <div key={cfg.label} className="flex items-center gap-1.5">
@@ -398,6 +399,12 @@ function Legend() {
           </div>
         )
       )}
+      {hasError && (
+        <span className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
+          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+          No se pudo actualizar
+        </span>
+      )}
     </div>
   );
 }
@@ -408,10 +415,7 @@ interface FloorPlan3DProps {
 }
 
 export function FloorPlan3D({ initialData }: FloorPlan3DProps) {
-  const { data } = useSWR<{ slots: SlotData[] }>("/api/slots", fetcher, {
-    fallbackData: initialData,
-    refreshInterval: 8000,
-  });
+  const { data, error } = useSlots(initialData);
 
   const slots = data?.slots ?? [];
 
@@ -427,7 +431,7 @@ export function FloorPlan3D({ initialData }: FloorPlan3DProps) {
           <Scene slots={slots} />
         </Canvas>
       </div>
-      <Legend />
+      <Legend hasError={!!error} />
     </div>
   );
 }

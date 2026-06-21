@@ -19,7 +19,7 @@ export function NewPlanButton({ vehicleTypes }: { vehicleTypes: VehicleType[] })
     <button
       onClick={() => setOpen(true)}
       className="w-full h-12 rounded-2xl text-sm font-bold text-white transition-all active:scale-[0.98]"
-      style={{ background: "#F97316" }}
+      style={{ background: "var(--color-primary)" }}
     >
       + Nueva mensualidad
     </button>

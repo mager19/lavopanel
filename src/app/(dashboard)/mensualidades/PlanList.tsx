@@ -121,7 +121,7 @@ export function PlanList({ plans, expiringSoon }: Props) {
                   <div className="text-right shrink-0">
                     <p
                       className="text-base font-extrabold"
-                      style={{ fontFamily: "var(--font-space-mono)", color: "#F97316" }}
+                      style={{ fontFamily: "var(--font-space-mono)", color: "var(--color-primary)" }}
                     >
                       {formatPrice(plan.amount)}
                     </p>

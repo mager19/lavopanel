@@ -129,7 +129,7 @@ export function ShiftActions({ openShift, summary }: Props) {
             </div>
             <div className="bg-muted/50 rounded-xl p-3 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Ingresos</p>
-              <p className="text-sm font-bold" style={{ color: "#F97316", fontFamily: "var(--font-space-mono)" }}>
+              <p className="text-sm font-bold" style={{ color: "var(--color-primary)", fontFamily: "var(--font-space-mono)" }}>
                 {formatPrice(summary?.revenue ?? 0)}
               </p>
             </div>

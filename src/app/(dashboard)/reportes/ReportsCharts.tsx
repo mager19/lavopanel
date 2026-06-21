@@ -6,7 +6,11 @@ import {
 } from "recharts";
 import type { ReportData } from "@/lib/services/reports";
 
-const COLORS = ["#F97316", "#3b82f6", "#14b8a6", "#8b5cf6", "#ec4899", "#f59e0b"];
+// Brand accent. Recharts passes `fill`/`color` straight into SVG attributes and
+// does not reliably resolve CSS `var(--…)` in all chart primitives, so we keep
+// the hex here and centralize it in a single const instead of scattering it.
+const BRAND = "#F97316";
+const COLORS = [BRAND, "#3b82f6", "#14b8a6", "#8b5cf6", "#ec4899", "#f59e0b"];
 
 function formatCOP(v: number) {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
@@ -52,7 +56,7 @@ export function ReportsCharts({ data }: Props) {
                 formatter={(value) => formatCOP(Number(value))}
                 labelStyle={{ fontWeight: "bold" }}
               />
-              <Bar dataKey="Ingresos" fill="#F97316" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Ingresos" fill={BRAND} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </section>
@@ -114,7 +118,7 @@ export function ReportsCharts({ data }: Props) {
                   </div>
                   <span
                     className="font-extrabold shrink-0"
-                    style={{ fontFamily: "var(--font-space-mono)", color: "#F97316" }}
+                    style={{ fontFamily: "var(--font-space-mono)", color: BRAND }}
                   >
                     {formatCOP(emp.revenue)}
                   </span>

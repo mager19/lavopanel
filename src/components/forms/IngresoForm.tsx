@@ -200,7 +200,7 @@ export function IngresoForm({
                     style={{
                       background: active ? "rgba(249,115,22,0.08)" : "var(--color-muted)/30",
                       border: active
-                        ? "1.5px solid #F97316"
+                        ? "1.5px solid var(--color-primary)"
                         : "1.5px solid transparent",
                       outline: "1px solid var(--color-border)",
                       outlineOffset: active ? "-1px" : "0",
@@ -210,7 +210,7 @@ export function IngresoForm({
                       <div
                         className="w-4 h-4 rounded flex items-center justify-center shrink-0"
                         style={{
-                          background: active ? "#F97316" : "var(--color-border)",
+                          background: active ? "var(--color-primary)" : "var(--color-border)",
                         }}
                       >
                         {active && (
@@ -228,7 +228,7 @@ export function IngresoForm({
                     </div>
                     <span
                       className="text-sm font-bold shrink-0"
-                      style={{ fontFamily: "var(--font-space-mono)", color: active ? "#F97316" : "var(--color-muted-foreground)" }}
+                      style={{ fontFamily: "var(--font-space-mono)", color: active ? "var(--color-primary)" : "var(--color-muted-foreground)" }}
                     >
                       {formatPrice(svc.price)}
                     </span>
@@ -274,7 +274,7 @@ export function IngresoForm({
                   className="px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
                   style={{
                     fontFamily: "var(--font-space-mono)",
-                    background: active ? "#F97316" : "var(--color-muted)",
+                    background: active ? "var(--color-primary)" : "var(--color-muted)",
                     color: active ? "#fff" : "var(--color-muted-foreground)",
                     border: active ? "none" : "1.5px solid var(--color-border)",
                   }}
@@ -323,7 +323,7 @@ export function IngresoForm({
                   onClick={() => setEmployeeId(w.id)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all"
                   style={{
-                    background: active ? "#F97316" : "var(--color-muted)",
+                    background: active ? "var(--color-primary)" : "var(--color-muted)",
                     color: active ? "#fff" : "var(--color-foreground)",
                     border: active ? "none" : "1.5px solid var(--color-border)",
                   }}
@@ -397,7 +397,7 @@ export function IngresoForm({
             className="text-2xl font-extrabold"
             style={{
               fontFamily: "var(--font-space-mono)",
-              color: total > 0 ? "#F97316" : "var(--color-muted-foreground)",
+              color: total > 0 ? "var(--color-primary)" : "var(--color-muted-foreground)",
             }}
           >
             {formatPrice(total)}
@@ -408,7 +408,7 @@ export function IngresoForm({
           disabled={!canSubmit || loading}
           className="w-full h-14 rounded-2xl text-base font-bold transition-all"
           style={{
-            background: canSubmit ? "#F97316" : "var(--color-muted)",
+            background: canSubmit ? "var(--color-primary)" : "var(--color-muted)",
             color: canSubmit ? "#fff" : "var(--color-muted-foreground)",
             cursor: canSubmit ? "pointer" : "not-allowed",
           }}

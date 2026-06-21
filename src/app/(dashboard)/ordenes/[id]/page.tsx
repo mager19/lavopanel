@@ -82,7 +82,7 @@ export default async function OrderDetailPage({ params }: Props) {
           <div className="text-right">
             <p
               className="text-[26px] font-extrabold leading-none"
-              style={{ fontFamily: "var(--font-space-mono)", color: "#F97316" }}
+              style={{ fontFamily: "var(--font-space-mono)", color: "var(--color-primary)" }}
             >
               {formatPrice(order.total)}
             </p>
@@ -166,7 +166,7 @@ export default async function OrderDetailPage({ params }: Props) {
                 </span>
                 <span
                   className="text-sm font-bold"
-                  style={{ fontFamily: "var(--font-space-mono)", color: "#F97316" }}
+                  style={{ fontFamily: "var(--font-space-mono)", color: "var(--color-primary)" }}
                 >
                   {formatPrice(item.priceSnapshot)}
                 </span>
@@ -177,7 +177,7 @@ export default async function OrderDetailPage({ params }: Props) {
             <span className="text-sm font-bold text-foreground">Total</span>
             <span
               className="text-xl font-extrabold"
-              style={{ fontFamily: "var(--font-space-mono)", color: "#F97316" }}
+              style={{ fontFamily: "var(--font-space-mono)", color: "var(--color-primary)" }}
             >
               {formatPrice(order.total)}
             </span>

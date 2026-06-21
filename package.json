@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:push": "TURSO_DATABASE_URL=file:local.db drizzle-kit push",
+    "db:generate": "TURSO_DATABASE_URL=file:local.db drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:seed": "TURSO_DATABASE_URL=file:local.db tsx src/lib/db/seed.ts",
     "db:studio": "TURSO_DATABASE_URL=file:local.db drizzle-kit studio"
   },

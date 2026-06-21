@@ -1,10 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
+import { useSlots } from "@/lib/hooks/useSlots";
 import type { SlotData } from "./SlotCard";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 // ── Status palette ───────────────────────────────────────────────
 const STATUS = {
@@ -138,10 +136,7 @@ interface FloorPlanProps {
 export function FloorPlan({ initialData }: FloorPlanProps) {
   const router = useRouter();
 
-  const { data } = useSWR<{ slots: SlotData[] }>("/api/slots", fetcher, {
-    fallbackData: initialData,
-    refreshInterval: 8000,
-  });
+  const { data, error } = useSlots(initialData);
 
   const allSlots = data?.slots ?? [];
   const parking  = allSlots.filter((s) => s.kind === "parking");
@@ -202,13 +197,19 @@ export function FloorPlan({ initialData }: FloorPlanProps) {
       </div>
 
       {/* Legend strip */}
-      <div className="px-4 py-3 border-t border-border/40 bg-muted/20 flex flex-wrap gap-x-4 gap-y-1">
+      <div className="px-4 py-3 border-t border-border/40 bg-muted/20 flex flex-wrap items-center gap-x-4 gap-y-1">
         {(Object.entries(STATUS) as [StatusKey, (typeof STATUS)[StatusKey]][]).map(([key, cfg]) => (
           <div key={key} className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cfg.dot }} />
             <span className="text-[11px] text-muted-foreground font-medium">{cfg.label}</span>
           </div>
         ))}
+        {error && (
+          <span className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+            No se pudo actualizar
+          </span>
+        )}
       </div>
     </div>
   );

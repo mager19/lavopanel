@@ -51,7 +51,7 @@ export default async function DashboardPage() {
     {
       icon: Car,
       iconBg: "#fff7ed",
-      iconColor: "#F97316",
+      iconColor: "var(--color-primary)",
       value: kpis.todayCount.toString(),
       valueColor: "#111827",
       label: "Autos hoy",
@@ -67,9 +67,9 @@ export default async function DashboardPage() {
     {
       icon: Banknote,
       iconBg: "#fff7ed",
-      iconColor: "#F97316",
+      iconColor: "var(--color-primary)",
       value: formatRevenue(kpis.todayRevenue),
-      valueColor: "#F97316",
+      valueColor: "var(--color-primary)",
       label: "Ingresos",
     },
   ];
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-2">
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "#F97316" }}
+              style={{ background: "var(--color-primary)" }}
             >
               <Zap className="w-3.5 h-3.5 text-white" />
             </div>

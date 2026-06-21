@@ -75,7 +75,7 @@ export default async function ReportesPage({ searchParams }: Props) {
           {[
             { label: "Órdenes", value: data.summary.totalOrders.toString(), color: "var(--color-foreground)" },
             { label: "Entregadas", value: data.summary.deliveredOrders.toString(), color: "#22c55e" },
-            { label: "Ingresos", value: formatPrice(data.summary.totalRevenue), color: "#F97316" },
+            { label: "Ingresos", value: formatPrice(data.summary.totalRevenue), color: "var(--color-primary)" },
             { label: "Promedio", value: formatPrice(data.summary.avgRevenue), color: "#3b82f6" },
           ].map(({ label, value, color }) => (
             <div

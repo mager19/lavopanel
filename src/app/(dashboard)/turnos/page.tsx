@@ -96,7 +96,7 @@ export default async function TurnosPage() {
                       <div className="text-right shrink-0">
                         <p
                           className="text-base font-extrabold"
-                          style={{ fontFamily: "var(--font-space-mono)", color: "#F97316" }}
+                          style={{ fontFamily: "var(--font-space-mono)", color: "var(--color-primary)" }}
                         >
                           {formatPrice(s.revenue)}
                         </p>

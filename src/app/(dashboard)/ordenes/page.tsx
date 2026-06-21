@@ -49,7 +49,7 @@ export default async function OrdenesPage() {
             : `${orders.length} orden${orders.length !== 1 ? "es" : ""} en curso`
         }
         icon={ClipboardList}
-        iconColor="#F97316"
+        iconColor="var(--color-primary)"
         iconBg="#fff7ed"
       />
 
@@ -129,7 +129,7 @@ export default async function OrdenesPage() {
                   </span>
                   <span
                     className="text-base font-extrabold"
-                    style={{ fontFamily: "var(--font-space-mono)", color: "#F97316" }}
+                    style={{ fontFamily: "var(--font-space-mono)", color: "var(--color-primary)" }}
                   >
                     {formatPrice(order.total)}
                   </span>
@@ -145,7 +145,7 @@ export default async function OrdenesPage() {
         <Link
           href="/ingreso"
           className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-transform active:scale-95"
-          style={{ background: "#F97316" }}
+          style={{ background: "var(--color-primary)" }}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2" strokeLinecap="round" />

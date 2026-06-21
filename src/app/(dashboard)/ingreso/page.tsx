@@ -57,7 +57,7 @@ export default async function IngresoPage({ searchParams }: Props) {
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
               style={{ background: "#fff7ed" }}
             >
-              <Plus className="w-4.5 h-4.5" style={{ color: "#F97316" }} />
+              <Plus className="w-4.5 h-4.5" style={{ color: "var(--color-primary)" }} />
             </div>
             <div>
               <h1 className="text-[22px] font-extrabold tracking-tight text-foreground leading-tight">
@@ -68,7 +68,7 @@ export default async function IngresoPage({ searchParams }: Props) {
                   Espacio{" "}
                   <span
                     className="font-extrabold"
-                    style={{ color: "#F97316", fontFamily: "var(--font-space-mono)" }}
+                    style={{ color: "var(--color-primary)", fontFamily: "var(--font-space-mono)" }}
                   >
                     {preselectedSlot}
                   </span>

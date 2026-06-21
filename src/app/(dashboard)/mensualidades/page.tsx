@@ -38,7 +38,7 @@ export default async function MensualidadesPage() {
           expiringSoon.length > 0 ? (
             <span
               className="text-xs font-bold px-3 py-1.5 rounded-full"
-              style={{ background: "#fff7ed", color: "#F97316", border: "1px solid #fed7aa" }}
+              style={{ background: "#fff7ed", color: "var(--color-primary)", border: "1px solid #fed7aa" }}
             >
               {expiringSoon.length} por vencer
             </span>

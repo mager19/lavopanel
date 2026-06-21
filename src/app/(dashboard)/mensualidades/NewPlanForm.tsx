@@ -197,7 +197,7 @@ export function NewPlanForm({ vehicleTypes, onCancel }: Props) {
           disabled={loading || !plate || !vehicleTypeId}
           className="flex-1 h-11 rounded-xl text-sm font-bold text-white transition-all"
           style={{
-            background: loading || !plate ? "var(--color-muted)" : "#F97316",
+            background: loading || !plate ? "var(--color-muted)" : "var(--color-primary)",
             color: loading || !plate ? "var(--color-muted-foreground)" : "white",
           }}
         >

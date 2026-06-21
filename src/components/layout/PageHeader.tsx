@@ -13,7 +13,7 @@ export function PageHeader({
   title,
   subtitle,
   icon: Icon,
-  iconColor = "#F97316",
+  iconColor = "var(--color-primary)",
   iconBg = "#fff7ed",
   action,
 }: PageHeaderProps) {

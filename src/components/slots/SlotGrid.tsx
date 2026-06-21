@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import useSWR from "swr";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSlots } from "@/lib/hooks/useSlots";
 import { SlotCard, type SlotData } from "./SlotCard";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 type FilterKind = "all" | "parking" | "wash";
 
@@ -22,14 +20,7 @@ interface SlotGridProps {
 export function SlotGrid({ initialData }: SlotGridProps) {
   const [filter, setFilter] = useState<FilterKind>("all");
 
-  const { data, isLoading } = useSWR<{ slots: SlotData[] }>(
-    "/api/slots",
-    fetcher,
-    {
-      fallbackData: initialData,
-      refreshInterval: 8000,
-    }
-  );
+  const { data, isLoading, error } = useSlots(initialData);
 
   const allSlots = data?.slots ?? [];
 
@@ -56,6 +47,15 @@ export function SlotGrid({ initialData }: SlotGridProps) {
           </button>
         ))}
       </div>
+
+      {/* Error discreto: el polling falló (mostramos los últimos datos si los hay) */}
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2">
+          <span className="w-2 h-2 rounded-full bg-orange-500 shrink-0" />
+          <span className="font-medium">No se pudo actualizar.</span>
+          <span className="text-orange-600/80">Reintentando…</span>
+        </div>
+      )}
 
       {/* Grid */}
       {isLoading && !data ? (
