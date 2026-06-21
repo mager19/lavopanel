@@ -4,6 +4,7 @@ import {
   sqliteTable,
   text,
   real,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 export const vehicleTypes = sqliteTable("vehicle_types", {
@@ -47,14 +48,22 @@ export const services = sqliteTable("services", {
   active: integer("active", { mode: "boolean" }).default(true),
 });
 
-export const parkingRates = sqliteTable("parking_rates", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  vehicleTypeId: integer("vehicle_type_id")
-    .notNull()
-    .references(() => vehicleTypes.id),
-  rateType: text("rate_type", { enum: ["hour", "day"] }).notNull(),
-  amount: integer("amount").notNull(),
-});
+export const parkingRates = sqliteTable(
+  "parking_rates",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    vehicleTypeId: integer("vehicle_type_id")
+      .notNull()
+      .references(() => vehicleTypes.id),
+    rateType: text("rate_type", { enum: ["hour", "day"] }).notNull(),
+    amount: integer("amount").notNull(),
+  },
+  (t) => [
+    // Una sola tarifa por (tipo de vehículo, hora/día) — requerido por el
+    // onConflictDoUpdate de upsertParkingRate.
+    uniqueIndex("parking_rates_type_unique").on(t.vehicleTypeId, t.rateType),
+  ]
+);
 
 export const slots = sqliteTable("slots", {
   id: integer("id").primaryKey({ autoIncrement: true }),

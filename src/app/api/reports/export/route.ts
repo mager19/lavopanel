@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
-import { serviceOrders, orderItems, services, users, vehicles, vehicleTypes } from "@/lib/db/schema";
+import { serviceOrders, users, vehicles, vehicleTypes } from "@/lib/db/schema";
 import { and, gte, lte, eq } from "drizzle-orm";
 
 export async function GET(req: Request) {
@@ -48,7 +48,24 @@ export async function GET(req: Request) {
     )
     .orderBy(serviceOrders.createdAt);
 
-  const header = ["ID", "Placa", "Tipo vehículo", "Estado", "Total", "Empleado", "Fecha"].join(",");
+  const escapeCsv = (value: unknown): string => {
+    if (value === null || value === undefined) {
+      return '""';
+    }
+    let str = String(value);
+    // Neutraliza inyección de fórmulas (CSV injection): si el valor empieza con
+    // un carácter que Excel/Sheets interpreta como fórmula, le anteponemos una
+    // comilla simple.
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = "'" + str;
+    }
+    // Entrecomillamos siempre y escapamos las comillas dobles internas.
+    return '"' + str.replace(/"/g, '""') + '"';
+  };
+
+  const header = ["ID", "Placa", "Tipo vehículo", "Estado", "Total", "Empleado", "Fecha"]
+    .map(escapeCsv)
+    .join(",");
   const rows = orders.map((o) => {
     const fecha = o.createdAt ? new Date(o.createdAt).toLocaleString("es-CO") : "";
     return [
@@ -58,8 +75,10 @@ export async function GET(req: Request) {
       o.status,
       o.total,
       o.employee ?? "",
-      `"${fecha}"`,
-    ].join(",");
+      fecha,
+    ]
+      .map(escapeCsv)
+      .join(",");
   });
 
   const csv = [header, ...rows].join("\n");

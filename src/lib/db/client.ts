@@ -8,3 +8,11 @@ const client = createClient({
 });
 
 export const db = drizzle(client, { schema });
+
+/**
+ * `db` o el objeto de transacción que recibe el callback de `db.transaction`.
+ * Permite que un servicio corra tanto suelto como dentro de una transacción.
+ */
+export type DbOrTx =
+  | typeof db
+  | Parameters<Parameters<typeof db.transaction>[0]>[0];

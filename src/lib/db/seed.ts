@@ -73,9 +73,9 @@ async function seed() {
   console.log("✓ Configuración del negocio guardada");
 
   // ── Usuarios ───────────────────────────────────────────────────────────────
-  const adminHash  = await hash("admin123",  10);
-  const ownerHash  = await hash("owner123",  10);
-  const workerHash = await hash("worker123", 10);
+  const adminHash  = await hash("admin123",  12);
+  const ownerHash  = await hash("owner123",  12);
+  const workerHash = await hash("worker123", 12);
 
   await db.insert(schema.users).values([
     {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireSession } from "@/lib/auth-guards";
 import { getOrderById, advanceOrderStatus } from "@/lib/services/orders";
 
 interface Params {
@@ -7,10 +7,11 @@ interface Params {
 }
 
 export async function POST(_req: Request, { params }: Params) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
+  // Solo exige sesión autenticada: avanzar órdenes por el workflow
+  // (received→in_progress→ready→delivered) es trabajo legítimo del worker,
+  // por eso no se aplica gate de rol.
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
 
   const { id } = await params;
   const orderId = Number(id);
@@ -27,15 +28,10 @@ export async function POST(_req: Request, { params }: Params) {
     return NextResponse.json({ error: "La orden ya fue entregada" }, { status: 400 });
   }
 
-  const isAdmin = ["admin", "owner"].includes(
-    (session.user as { role?: string }).role ?? ""
-  );
-
   try {
     const updated = await advanceOrderStatus(
       orderId,
-      order.status as "received" | "in_progress" | "ready",
-      isAdmin
+      order.status as "received" | "in_progress" | "ready"
     );
     return NextResponse.json({ order: updated });
   } catch (err) {

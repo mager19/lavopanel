@@ -150,8 +150,7 @@ export async function getOrderById(id: number) {
  */
 export async function advanceOrderStatus(
   id: number,
-  currentStatus: ActiveStatus,
-  _isAdmin: boolean
+  currentStatus: ActiveStatus
 ) {
   const next = nextStatus[currentStatus];
   if (!next) throw new Error(`Cannot advance from status: ${currentStatus}`);
@@ -214,73 +213,80 @@ export async function createOrder({
   userId?: number | null;
   employeeId?: number | null;
 }) {
-  // Find open shift for this user
-  let shiftId: number | null = null;
-  if (userId) {
-    const openShift = await db
-      .select({ id: shifts.id })
-      .from(shifts)
-      .where(and(eq(shifts.userId, userId), isNull(shifts.closedAt)))
-      .get();
-    shiftId = openShift?.id ?? null;
-  }
+  // Todo el ingreso (vehículo + orden + items + ocupar slot) corre en una
+  // transacción: si algo falla a mitad, no quedan datos huérfanos.
+  return db.transaction(async (tx) => {
+    // Find open shift for this user
+    let shiftId: number | null = null;
+    if (userId) {
+      const openShift = await tx
+        .select({ id: shifts.id })
+        .from(shifts)
+        .where(and(eq(shifts.userId, userId), isNull(shifts.closedAt)))
+        .get();
+      shiftId = openShift?.id ?? null;
+    }
 
-  // Upsert vehicle
-  const vehicle = await upsertVehicle({
-    plate,
-    vehicleTypeId,
-    ownerName: ownerName ?? undefined,
-    ownerPhone: ownerPhone ?? undefined,
-  });
-
-  // Get service prices
-  const selectedServices =
-    serviceIds.length > 0
-      ? await db
-          .select()
-          .from(services)
-          .where(
-            sql`${services.id} IN (${sql.join(
-              serviceIds.map((id) => sql`${id}`),
-              sql`, `
-            )})`
-          )
-      : [];
-
-  const total = selectedServices.reduce((sum, s) => sum + s.price, 0);
-
-  // Create order
-  const [order] = await db
-    .insert(serviceOrders)
-    .values({
-      vehicleId: vehicle.id,
-      slotId: slotId ?? null,
-      employeeId: employeeId ?? userId ?? null,
-      shiftId,
-      status: "received",
-      total,
-    })
-    .returning();
-
-  // Create order items
-  if (selectedServices.length > 0) {
-    await db.insert(orderItems).values(
-      selectedServices.map((s) => ({
-        orderId: order.id,
-        serviceId: s.id,
-        priceSnapshot: s.price,
-        qty: 1,
-      }))
+    // Upsert vehicle
+    const vehicle = await upsertVehicle(
+      {
+        plate,
+        vehicleTypeId,
+        ownerName: ownerName ?? undefined,
+        ownerPhone: ownerPhone ?? undefined,
+      },
+      tx
     );
-  }
 
-  // Mark slot as occupied
-  if (slotId) {
-    await db
-      .update(slots)
-      .set({ status: "occupied" })
-      .where(eq(slots.id, slotId));
-  }
+    // Get service prices
+    const selectedServices =
+      serviceIds.length > 0
+        ? await tx
+            .select()
+            .from(services)
+            .where(
+              sql`${services.id} IN (${sql.join(
+                serviceIds.map((id) => sql`${id}`),
+                sql`, `
+              )})`
+            )
+        : [];
 
-  return order;
+    const total = selectedServices.reduce((sum, s) => sum + s.price, 0);
+
+    // Create order
+    const [order] = await tx
+      .insert(serviceOrders)
+      .values({
+        vehicleId: vehicle.id,
+        slotId: slotId ?? null,
+        employeeId: employeeId ?? userId ?? null,
+        shiftId,
+        status: "received",
+        total,
+      })
+      .returning();
+
+    // Create order items
+    if (selectedServices.length > 0) {
+      await tx.insert(orderItems).values(
+        selectedServices.map((s) => ({
+          orderId: order.id,
+          serviceId: s.id,
+          priceSnapshot: s.price,
+          qty: 1,
+        }))
+      );
+    }
+
+    // Mark slot as occupied
+    if (slotId) {
+      await tx
+        .update(slots)
+        .set({ status: "occupied" })
+        .where(eq(slots.id, slotId));
+    }
+
+    return order;
+  });
 }

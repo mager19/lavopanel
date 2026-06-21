@@ -21,6 +21,13 @@ async function requireAdmin() {
   return session;
 }
 
+// Solo un admin puede crear o asignar el rol "admin"; un owner no puede escalar privilegios.
+function assertCanAssignRole(actorRole: string, targetRole: string) {
+  if (targetRole === "admin" && actorRole !== "admin") {
+    throw new Error("Solo un admin puede crear o asignar el rol admin");
+  }
+}
+
 // ── Slots ──────────────────────────────────────────────────────
 
 export async function createSlotAction(formData: FormData) {
@@ -72,7 +79,7 @@ export async function toggleServiceAction(id: number, active: boolean) {
 // ── Employees ─────────────────────────────────────────────────
 
 export async function createEmployeeAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const name = formData.get("name") as string;
   const email = (formData.get("email") as string).toLowerCase().trim();
   const password = formData.get("password") as string;
@@ -80,8 +87,9 @@ export async function createEmployeeAction(formData: FormData) {
 
   if (!name || !email || !password) throw new Error("Datos requeridos");
   if (!["admin", "owner", "worker"].includes(role)) throw new Error("Rol inválido");
+  assertCanAssignRole(session.user.role as string, role);
 
-  const passwordHash = await hash(password, 10);
+  const passwordHash = await hash(password, 12);
   await db.insert(users).values({ name, email, passwordHash, role: role as "admin" | "owner" | "worker" });
   revalidatePath("/configuracion");
 }
@@ -93,7 +101,8 @@ export async function toggleEmployeeAction(id: number, active: boolean) {
 }
 
 export async function updateEmployeeRoleAction(id: number, role: "admin" | "owner" | "worker") {
-  await requireAdmin();
+  const session = await requireAdmin();
+  assertCanAssignRole(session.user.role as string, role);
   await db.update(users).set({ role }).where(eq(users.id, id));
   revalidatePath("/configuracion");
 }

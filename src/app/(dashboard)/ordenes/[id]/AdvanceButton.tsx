@@ -18,10 +18,9 @@ const NEXT_COLOR: Record<string, string> = {
 interface Props {
   orderId: number;
   currentStatus: "received" | "in_progress" | "ready";
-  isAdmin: boolean;
 }
 
-export function AdvanceButton({ orderId, currentStatus, isAdmin: _isAdmin }: Props) {
+export function AdvanceButton({ orderId, currentStatus }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

@@ -46,9 +46,6 @@ export default async function OrderDetailPage({ params }: Props) {
   const meta = STATUS_META[order.status] ?? STATUS_META.received;
   const currentStep = STATUS_STEPS.indexOf(order.status as (typeof STATUS_STEPS)[number]);
   const isDelivered = order.status === "delivered";
-  const isAdmin = ["admin", "owner"].includes(
-    (session.user as { role?: string }).role ?? ""
-  );
 
   return (
     <div className="flex flex-col min-h-full">
@@ -217,7 +214,6 @@ export default async function OrderDetailPage({ params }: Props) {
           <AdvanceButton
             orderId={order.id}
             currentStatus={order.status as "received" | "in_progress" | "ready"}
-            isAdmin={isAdmin}
           />
         )}
 

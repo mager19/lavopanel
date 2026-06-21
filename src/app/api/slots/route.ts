@@ -10,8 +10,12 @@ import {
   users,
 } from "@/lib/db/schema";
 import { eq, ne, asc, sql } from "drizzle-orm";
+import { requireSession } from "@/lib/auth-guards";
 
 export async function GET() {
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+
   try {
     // Fetch all active slots
     const activeSlots = await db

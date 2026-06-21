@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { cancelPlan } from "@/lib/services/monthly-plans";
+import { requireRole } from "@/lib/auth-guards";
 
 interface Params {
   params: Promise<{ id: string }>;
 }
 
 export async function POST(_req: Request, { params }: Params) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
+  const guard = await requireRole(["admin", "owner"]);
+  if (!guard.ok) return guard.response;
 
   const { id } = await params;
   const planId = Number(id);

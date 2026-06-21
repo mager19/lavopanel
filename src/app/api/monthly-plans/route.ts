@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { createMonthlyPlan, expireOverduePlans } from "@/lib/services/monthly-plans";
 import { upsertVehicle } from "@/lib/services/vehicles";
+import { requireRole } from "@/lib/auth-guards";
 import { z } from "zod";
 
 const schema = z.object({
@@ -16,10 +16,8 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
+  const guard = await requireRole(["admin", "owner"]);
+  if (!guard.ok) return guard.response;
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
